@@ -150,12 +150,14 @@
             border-radius: 12px;
             font-weight: 600;
             padding: 0 30px;
-            transition: 0.3s;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
             text-decoration: none;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-hero:hover {
@@ -163,6 +165,19 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
             color: white;
+        }
+
+        /* --- NEW: Button Loading State Animation --- */
+        .btn-loading {
+            background-color: #b71c1c; /* Darker red to show "processing" */
+            transform: scale(0.98);
+            pointer-events: none; /* Prevent double clicks */
+        }
+
+        .btn-loading:hover {
+            transform: scale(0.98); /* Keep it scaled */
+            box-shadow: none;
+            background-color: #b71c1c;
         }
 
         /* Hero Image */
@@ -381,26 +396,29 @@
                         Find the best bus routes, book sun-free seats, and track your journey in real-time. The modern way to travel by road.
                     </p>
 
-                    <!-- Search Mockup -->
+                    <!-- UPDATED SEARCH FORM -->
                     <div class="search-container">
-                        <form onsubmit="event.preventDefault();">
+                        <form id="homeSearchForm" onsubmit="handleHomeSearch(event)">
                             <div class="row g-3">
                                 <div class="col-md-5 col-sm-12">
                                     <div class="search-input-group">
                                         <i class="fas fa-map-marker-alt"></i>
-                                        <input type="text" class="form-control form-control-custom" placeholder="Where from?">
+                                        <!-- Added ID homeFrom -->
+                                        <input type="text" id="homeFrom" class="form-control form-control-custom" placeholder="Where from?" required>
                                     </div>
                                 </div>
                                 <div class="col-md-5 col-sm-12">
                                     <div class="search-input-group">
                                         <i class="fas fa-location-arrow"></i>
-                                        <input type="text" class="form-control form-control-custom" placeholder="Where to?">
+                                        <!-- Added ID homeTo -->
+                                        <input type="text" id="homeTo" class="form-control form-control-custom" placeholder="Where to?" required>
                                     </div>
                                 </div>
                                 <div class="col-md-2 col-sm-12 d-flex">
-                                    <!-- d-flex ensures button fills height of container if needed -->
-                                    <button type="submit" class="btn btn-hero">
-                                        Search
+                                    <!-- Added IDs for animation control -->
+                                    <button type="submit" id="searchBtn" class="btn btn-hero">
+                                        <span id="btnText">Search</span>
+                                        <div id="btnLoader" class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></div>
                                     </button>
                                 </div>
                             </div>
@@ -539,5 +557,28 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- NEW: Script to handle search logic and animation -->
+    <script>
+        function handleHomeSearch(e) {
+            e.preventDefault();
+            const btn = document.getElementById('searchBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const fromVal = document.getElementById('homeFrom').value;
+            const toVal = document.getElementById('homeTo').value;
+
+            // 1. Visual Feedback Animation
+            btnText.innerText = "Finding...";
+            btnLoader.classList.remove('d-none');
+            btn.classList.add('btn-loading');
+
+            // 2. Simulate searching then redirect (Efficiency: prevents form refresh)
+            setTimeout(() => {
+                // Redirect to search.html with data
+                window.location.href = `search.html?from=${encodeURIComponent(fromVal)}&to=${encodeURIComponent(toVal)}`;
+            }, 800); // 800ms delay to show the animation
+        }
+    </script>
 </body>
 </html>
