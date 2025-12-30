@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmartBus</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #E53935;
+            --primary-hover: #c62828;
+            --accent: #F5F5F7;
+            --text-dark: #1B1B1E;
+            --text-light: #666;
+            --radius: 14px;
+            --shadow: 0 8px 24px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--accent);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- Layout --- */
+        .login-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* Left Side (Image & Welcome) */
+        .login-left {
+            flex: 1;
+            background: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem;
+            color: white;
+            z-index: 1;
+        }
+
+        /* Overlay for readability on image */
+        .login-left::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+            z-index: -1;
+        }
+
+        .login-left h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-left p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 450px;
+            line-height: 1.6;
+        }
+
+        /* Right Side (Form) */
+        .login-right {
+            flex: 1;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand-logo {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        /* --- Form Elements --- */
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            border: 1px solid #e0e0e0;
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: #f9f9f9;
+            color: var(--text-dark);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.1);
+        }
+
+        /* Password Toggle Icon */
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-dark);
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-main:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .btn-main:active {
+            transform: translateY(0);
+        }
+
+        .btn-main:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .small-text {
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--text-light);
+            margin-top: 1.5rem;
+        }
+
+        .small-text a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .small-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* Checkbox */
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Social Login */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-light);
+            margin: 1.5rem 0;
+            font-size: 0.85rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #eee;
+        }
+        .divider span { padding: 0 10px; }
+
+        .social-login {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .social-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid #eee;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .social-btn:hover {
+            background: #f5f5f7;
+            transform: scale(1.05);
+            border-color: #ddd;
+        }
+
+        /* --- Toast Notification --- */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .custom-toast {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 5px solid;
+            transform: translateX(150%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-width: 300px;
+        }
+        .toast-show { transform: translateX(0); }
+        .toast-success { border-color: #2e7d32; }
+        .toast-success i { color: #2e7d32; }
+        .toast-error { border-color: #d32f2f; }
+        .toast-error i { color: #d32f2f; }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 992px) {
+            .login-left { display: none; } /* Hide image on tablets to focus on form */
+            .login-right { flex: 1; }
+        }
+
+        @media (max-width: 576px) {
+            .login-wrapper { flex-direction: column; }
+            .login-left {
+                flex: 0 0 200px;
+                display: flex; /* Show again but small */
+                justify-content: center;
+                padding: 1.5rem;
+            }
+            .login-left h1 { font-size: 2rem; }
+            .login-left p { display: none; }
+            .login-right { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <!-- Toast Notification Container -->
+    <div class="toast-container">
+        <div id="toast" class="custom-toast">
+            <i class="fas fa-check-circle fa-lg"></i>
+            <div>
+                <h6 class="m-0 fw-bold" id="toast-title">Success</h6>
+                <small class="text-muted" id="toast-msg">Logged in successfully.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEFT SIDE SECTION (WELCOME + IMAGE) -->
+    <div class="login-left">
+        <h1>Welcome Back</h1>
+        <p>Book buses, track live locations, avoid sunlight seats & travel comfortably with SmartBus.</p>
+    </div>
+
+    <!-- RIGHT SIDE (FORM) -->
+    <div class="login-right">
+        <div class="login-card">
+            
+            <!-- Brand Logo (Visible on small screens where left panel is hidden) -->
+            <a href="#" class="brand-logo d-lg-none">
+                <i class="fas fa-bus-alt"></i> SmartBus
+            </a>
+
+            <h3 class="fw-bold mb-1">Sign in</h3>
+            <p class="text-muted mb-4">Please enter your details to continue.</p>
+
+            <form id="loginForm">
+                <!-- Email Input -->
+                <div class="form-group">
+                    <label for="email" class="form-label text-muted small fw-semibold">EMAIL ADDRESS</label>
+                    <input type="email" class="form-control input-field" id="email" placeholder="name@example.com" required>
+                </div>
+
+                <!-- Password Input -->
+                <div class="form-group">
+                    <label for="password" class="form-label text-muted small fw-semibold">PASSWORD</label>
+                    <input type="password" class="form-control input-field" id="password" placeholder="••••••••" required>
+                    <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+                </div>
+
+                <!-- Remember & Recover -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="remember">
+                        <label class="form-check-label small text-muted" for="remember">Remember Me</label>
+                    </div>
+                    <a href="#" class="text-decoration-none small fw-semibold" style="color: var(--primary);">Forgot Password?</a>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-main" id="submitBtn">
+                    <span>Sign in now</span>
+                    <!-- Spinner (hidden by default) -->
+                    <div class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></div>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+
+            <!-- Social Login -->
+            <div class="social-login">
+                <div class="social-btn" onclick="showToast('Google', 'Redirecting to Google...', 'success')">
+                    <i class="fab fa-google"></i>
+                </div>
+                <div class="social-btn" onclick="showToast('Apple', 'Redirecting to Apple...', 'success')">
+                    <i class="fab fa-apple"></i>
+                </div>
+                <div class="social-btn" onclick="showToast('Facebook', 'Redirecting to Facebook...', 'success')">
+                    <i class="fab fa-facebook-f"></i>
+                </div>
+            </div>
+
+            <!-- Register Link -->
+            <div class="small-text">
+                New here? <a href="#">Create account</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. Password Visibility Toggle ---
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+
+    togglePassword.addEventListener('click', function () {
+        // Toggle type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        // Toggle eye icon
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
+    });
+
+    // --- 2. Form Submission Simulation ---
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = submitBtn.querySelector('span');
+    const spinner = submitBtn.querySelector('.spinner-border');
+
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Stop actual page reload
+        
+        // UI Loading State
+        submitBtn.disabled = true;
+        btnText.textContent = "Verifying...";
+        spinner.classList.remove('d-none');
+
+        // Simulate Network Delay (1.5 seconds)
+        setTimeout(() => {
+            // Reset Button
+            submitBtn.disabled = false;
+            btnText.textContent = "Sign in now";
+            spinner.classList.add('d-none');
+
+            // Get email value for personalization
+            const email = document.getElementById('email').value;
+
+            // Show Success Message
+            showToast('Welcome Back!', `Logged in as ${email}`, 'success');
+            
+            // Optional: Clear form
+            // loginForm.reset();
+
+        }, 1500);
+    });
+
+    // --- 3. Custom Toast Notification Logic ---
+    function showToast(title, message, type) {
+        const toast = document.getElementById('toast');
+        const toastTitle = document.getElementById('toast-title');
+        const toastMsg = document.getElementById('toast-msg');
+        const toastIcon = toast.querySelector('i');
+
+        // Set Content
+        toastTitle.textContent = title;
+        toastMsg.textContent = message;
+
+        // Set Type Styles
+        toast.className = 'custom-toast'; // Reset classes
+        if (type === 'success') {
+            toast.classList.add('toast-success');
+            toastIcon.className = 'fas fa-check-circle fa-lg';
+        } else {
+            toast.classList.add('toast-error');
+            toastIcon.className = 'fas fa-exclamation-circle fa-lg';
+        }
+
+        // Show Toast
+        setTimeout(() => {
+            toast.classList.add('toast-show');
+        }, 100);
+
+        // Hide Toast after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('toast-show');
+        }, 3500);
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SmartBus</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #E53935;       /* Brand Red */
+            --primary-hover: #c62828;
+            --text-dark: #1B1B1E;
+            --text-muted: #6c757d;
+            --radius: 16px;
+            --bg-color: #F5F5F7;
+            --input-height: 54px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Brand Logo Header */
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-brand span { color: var(--primary); }
+
+        /* Auth Card Container */
+        .auth-container {
+            max-width: 450px;
+            margin: auto;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* Standard Input Group Styling */
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .input-wrapper i {
+            position: absolute;
+            left: 1px;
+            top: 1px;
+            bottom: 1px;
+            width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #adb5bd;
+            border-right: 1px solid transparent;
+            border-radius: 12px 0 0 12px;
+            background: #fcfcfc;
+            transition: 0.3s;
+            z-index: 5;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 14px 14px 14px 48px;
+            font-size: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            background: #fcfcfc;
+            transition: all 0.3s;
+            color: var(--text-dark);
+            height: var(--input-height);
+        }
+
+        .form-control-custom:focus {
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.1);
+            outline: none;
+        }
+
+        /* Highlight icon on focus */
+        .form-control-custom:focus ~ i {
+            color: var(--primary);
+            background: white;
+            border-right-color: #e9ecef;
+        }
+
+        /* --- NEW: Phone Number Input Group --- */
+        .phone-input-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            background: #fcfcfc;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        /* Focus state for the whole group (either input or select focused) */
+        .phone-input-group:focus-within {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.1);
+        }
+
+        /* Country Code Selector */
+        .country-select-wrapper {
+            position: relative;
+            min-width: 110px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .country-select {
+            appearance: none; /* Remove native arrow */
+            -webkit-appearance: none;
+            border: none;
+            background: transparent;
+            padding: 0 30px 0 15px; /* Right padding for custom arrow */
+            height: var(--input-height);
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            outline: none;
+            width: 100%;
+            z-index: 2;
+        }
+
+        /* Custom Arrow for Select */
+        .country-select-wrapper::after {
+            content: '\f078'; /* FontAwesome Chevron Down */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            color: #adb5bd;
+            pointer-events: none;
+        }
+
+        /* Separator line */
+        .separator-line {
+            width: 1px;
+            height: 24px;
+            background-color: #e9ecef;
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+
+        /* Actual Number Input */
+        .phone-number-input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 0;
+            height: var(--input-height);
+            font-size: 1rem;
+            color: var(--text-dark);
+            outline: none;
+        }
+        
+        .phone-number-input::placeholder {
+            color: #adb5bd;
+        }
+
+        /* Button Styling */
+        .btn-main {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            padding: 14px;
+            border: none;
+            border-radius: 50px;
+            width: 100%;
+            font-size: 1rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+            height: var(--input-height);
+        }
+
+        .btn-main:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(229, 57, 53, 0.3);
+            color: white;
+        }
+
+        /* Social Divider */
+        .social-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #adb5bd;
+            margin: 24px 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .social-divider::before, .social-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #eee;
+        }
+        .social-divider::before { margin-right: 10px; }
+        .social-divider::after { margin-left: 10px; }
+
+        /* Social Buttons */
+        .btn-social {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 50px;
+            border: 1px solid #e9ecef;
+            background: white;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-social:hover {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            transform: translateY(-1px);
+        }
+
+        /* Helper Links */
+        .auth-links {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .auth-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Simple Logo Header -->
+    <div class="py-4">
+        <div class="container text-center">
+            <a href="index.html" class="navbar-brand justify-content-center">
+                <i class="fas fa-bus-alt text-danger"></i> SmartBus
+            </a>
+        </div>
+    </div>
+
+    <div class="container auth-container">
+        <div class="auth-card">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold mb-1">Create Account</h2>
+                <p class="text-muted small">Join us for the smartest way to travel.</p>
+            </div>
+
+            <form onsubmit="event.preventDefault();">
+                <!-- Name Input -->
+                <div class="input-wrapper">
+                    <input type="text" class="form-control form-control-custom" placeholder="Full Name" required>
+                    <i class="fas fa-user"></i>
+                </div>
+
+                <!-- Email Input -->
+                <div class="input-wrapper">
+                    <input type="email" class="form-control form-control-custom" placeholder="Email Address" required>
+                    <i class="fas fa-envelope"></i>
+                </div>
+
+                <!-- NEW: Phone Number with Country Code -->
+                <div class="phone-input-group">
+                    <div class="country-select-wrapper">
+                        <select class="country-select" id="countryCode">
+                            <option value="+1" selected>US +1</option>
+                            <option value="+44">UK +44</option>
+                            <option value="+91">IN +91</option>
+                            <option value="+61">AU +61</option>
+                            <option value="+81">JP +81</option>
+                            <option value="+49">DE +49</option>
+                        </select>
+                    </div>
+                    <div class="separator-line"></div>
+                    <input type="tel" class="phone-number-input" placeholder="Phone Number" required>
+                </div>
+
+                <!-- Password Input -->
+                <div class="input-wrapper">
+                    <input type="password" class="form-control form-control-custom" placeholder="Password" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+
+                <!-- Terms Checkbox -->
+                <div class="form-check mb-4 small">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label text-muted" for="terms">
+                        I agree to the <a href="#" class="text-danger">Terms & Conditions</a>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-main">
+                    Register
+                </button>
+            </form>
+
+            <!-- Social Login Divider -->
+            <div class="social-divider">OR</div>
+
+            <!-- Social Login Buttons -->
+            <button class="btn-social">
+                <i class="fab fa-google" style="color: #DB4437;"></i>
+                Continue with Google
+            </button>
+            
+            <button class="btn-social">
+                <i class="fab fa-apple"></i>
+                Continue with Apple
+            </button>
+
+            <div class="auth-links">
+                Already have an account? <a href="login.html">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
