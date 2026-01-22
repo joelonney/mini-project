@@ -17,12 +17,12 @@
         :root {
             --primary: #E53935;
             --primary-hover: #c62828;
-            --bg-color: #F5F5F7;
+            --bg-color: #F0F2F5;
             --text-dark: #1B1B1E;
-            --text-muted: #6c757d;
             --seat-base: #e9ecef;
             --seat-selected: var(--primary);
-            --seat-shaded: #198754; /* Green for sun-safe */
+            --seat-shaded: #198754;
+            --premium-border: #ffd700;
         }
 
         body {
@@ -30,13 +30,14 @@
             background: var(--bg-color);
             color: var(--text-dark);
             min-height: 100vh;
+            padding-bottom: 120px; /* Space for FAB */
         }
 
         /* --- Header --- */
         .top-bar {
             background: white;
             padding: 15px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -54,20 +55,58 @@
         
         .back-btn:hover { color: var(--primary); transform: translateX(-5px); }
 
+        /* --- Controls Toolbar --- */
+        .controls-toolbar {
+            background: white;
+            margin-top: 25px;
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .tool-btn {
+            flex: 1;
+            border: 1px solid #eee;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .tool-btn:hover { background: #f8f9fa; border-color: var(--primary); color: var(--primary); }
+        .tool-btn.active { background: var(--text-dark); color: white; border-color: var(--text-dark); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .btn-reset { color: #dc3545; border-color: #ffebeb; }
+        .btn-reset:hover { background: #dc3545; color: white; }
+
         /* --- Sun Analyzer Card --- */
         .analyzer-card {
             background: white;
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-top: 20px;
             border: 1px solid rgba(0,0,0,0.03);
-            animation: slideDown 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
         }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Subtle background shine for card */
+        .analyzer-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,152,0,0.03) 0%, transparent 70%);
+            pointer-events: none;
         }
 
         .input-modern {
@@ -77,10 +116,15 @@
             font-weight: 500;
             color: var(--text-dark);
             width: 100%;
+            transition: 0.3s;
+        }
+        .input-modern:focus {
+            border-color: #FF9800;
+            box-shadow: 0 0 0 4px rgba(255,152,0,0.1);
         }
 
         .btn-sun-check {
-            background: #212529;
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
             color: white;
             border: none;
             padding: 12px 24px;
@@ -92,173 +136,235 @@
             gap: 8px;
             width: 100%;
             justify-content: center;
+            box-shadow: 0 5px 15px rgba(245, 124, 0, 0.25);
         }
+        .btn-sun-check:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245, 124, 0, 0.35); }
 
-        .btn-sun-check:hover {
-            background: var(--primary);
-            transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3);
-        }
-
-        .sun-result-box {
-            margin-top: 20px;
-            background: #f8f9fa;
+        .sun-action-btn {
+            background: #28a745; /* Brighter Green */
+            color: white;
+            border: none;
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
             border-radius: 12px;
-            padding: 15px;
-            display: none; /* Hidden by default */
-            animation: fadeIn 0.5s;
+            font-weight: 600;
+            display: none; /* Hidden initially */
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .sun-status-text {
+            font-size: 0.9rem;
+            margin-top: 20px;
+            display: none;
+            padding: 12px;
+            border-radius: 12px;
+            background: #f0fff4;
+            color: #198754;
+            border: 1px solid #b7eb8f;
+            animation: slideDown 0.4s ease;
+            font-weight: 500;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- Bus Layout --- */
         .bus-container {
-            background: white;
-            border-radius: 30px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            background: #ffffff;
+            border-radius: 40px;
+            padding: 40px 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
             max-width: 600px;
             margin: 0 auto;
-            border: 8px solid #e9ecef;
+            border: 1px solid #e9ecef; /* Metallic feel */
             position: relative;
+            margin-top: 30px;
         }
 
-        /* Driver Section */
         .driver-area {
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 40px;
-            border-bottom: 2px dashed #ddd;
+            margin-bottom: 30px;
+            border-bottom: 2px dashed #ccc;
             padding-bottom: 15px;
         }
         .driver-icon {
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            padding: 10px;
-            background: #f8f9fa;
+            font-size: 1.8rem;
+            color: #555;
+            padding: 12px;
+            background: #f1f3f5;
             border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        /* Seat Grid */
         .seat-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 40px 1fr 1fr; /* Left Seats | Aisle | Right Seats */
-            gap: 15px;
+            grid-template-columns: 1fr 1fr 50px 1fr 1fr; 
+            gap: 18px;
             justify-items: center;
+            justify-content: center;
+        }
+
+        .seat-grid.sleeper-layout {
+            grid-template-columns: 1fr 25px 1fr;
+            gap: 12px;
         }
 
         .seat {
-            width: 45px;
-            height: 45px;
-            background: var(--seat-base);
-            border-radius: 8px 8px 12px 12px; /* Chair shape */
+            height: 48px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 10px 10px 14px 14px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #adb5bd;
+            color: #888;
             border: 2px solid transparent;
+            width: 52px;
+            opacity: 0; /* For entrance animation */
+            transform: translateY(15px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        .seat:hover {
-            background: #dee2e6;
+        .seat.animate-in { animation: seatPop 0.5s forwards; }
+        @keyframes seatPop { to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Premium Seat Update --- */
+        .seat.premium { 
+            border-color: var(--premium-border); 
+            background: linear-gradient(145deg, #fff8e1, #ffecb3);
+        }
+        .seat.premium::before {
+            content: 'Premium';
+            position: absolute;
+            top: -15px;
+            font-size: 0.4rem;
+            background: var(--premium-border);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: none; /* Show on hover only */
+            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+        }
+        .seat.premium:hover::before { display: block; }
+        .seat.premium:hover { transform: scale(1.1) translateY(-2px); }
+
+        .seat.sleeper { width: 100%; height: 38px; border-radius: 8px; }
+        .seat.sleeper.upper { height: 38px; margin-bottom: 5px; background-color: #dee2e6; }
+
+        .seat:hover:not(.sold):not(.sun-hot):not(.sun-safe) {
+            background: #e2e6ea;
             transform: scale(1.1);
             color: var(--text-dark);
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .seat.selected {
             background: var(--seat-selected);
             color: white;
-            box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
-            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.4);
+            transform: scale(1.05);
+            z-index: 10;
+            border-color: white;
         }
 
-        /* --- Sun Suggestion Animation States --- */
-        .seat.sun-safe {
-            background: var(--seat-shaded);
-            color: white;
-            border: 2px solid #146c43;
-            box-shadow: 0 0 15px rgba(25, 135, 84, 0.5);
-            animation: pulse-green 2s infinite;
+        /* --- SOLD SEATS: BLACK & DISABLED --- */
+        .seat.sold {
+            background: #000000; /* SOLID BLACK */
+            color: #444; /* Dark text, almost invisible */
+            cursor: not-allowed;
+            pointer-events: none; /* STRICTLY DISABLED */
+            border-color: #222;
+            box-shadow: none;
+            transform: none !important; /* No hover effect */
         }
-        
-        .seat.sun-safe::after {
-            content: '\f185'; /* Sun Icon */
+        /* Add Lock Icon for sold seats */
+        .seat.sold::after {
+            content: '\f023'; /* FontAwesome Lock */
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #fff;
-            color: var(--seat-shaded);
-            font-size: 0.6rem;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #eee;
+            font-size: 1rem;
+            color: #444;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Amenity Icons */
+        .amenity-icon {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            font-size: 0.65rem;
+            color: #999;
+            pointer-events: none;
+        }
+
+        /* --- SUN SAFE: BRIGHT GREEN GLOW --- */
+        .seat.sun-safe {
+            background: #198754 !important; 
+            color: white !important;
+            border: 2px solid #00ff88; /* Neon Border */
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.6), inset 0 0 10px rgba(255,255,255,0.2);
+            animation: pulse-green 2s infinite;
+            z-index: 5;
+        }
+        .seat.sun-safe::after {
+            content: 'Best';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00ff88;
+            color: #004d1a;
+            font-size: 0.45rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,255,136,0.4);
         }
 
         @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
         }
 
-        .seat.sun-hot {
-            opacity: 0.5; /* Dim the hot seats to discourage selection */
-        }
+        .seat.sun-hot { opacity: 0.2; filter: grayscale(1); }
 
-        .seat.sold {
-            background: #343a40;
-            cursor: not-allowed;
-            opacity: 0.3;
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(to right, transparent, #FF9800, transparent);
+            z-index: 5; display: none; box-shadow: 0 0 20px #FF9800;
+            animation: scanMove 2s ease-in-out forwards;
         }
-        
-        /* Aisle Labels */
-        .aisle-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #ced4da;
-            font-weight: 700;
-            text-align: center;
+        @keyframes scanMove {
+            0% { top: 10%; opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { top: 90%; opacity: 0; }
         }
 
         /* --- Floating Summary --- */
         .summary-fab {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--text-dark);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            min-width: 300px;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.3s;
+            position: fixed; bottom: 25px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a1a; color: white;
+            padding: 18px 35px; border-radius: 50px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 25px; min-width: 320px; z-index: 2000;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-
-        .summary-fab.visible {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-            pointer-events: all;
-        }
-
+        .summary-fab.visible { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -269,92 +375,76 @@
             <a href="search.html" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
-            <h5 class="fw-bold m-0">Seat Selection</h5>
-            <div style="width: 50px;"></div> <!-- Spacer -->
+            <h5 class="fw-bold m-0 text-truncate" style="max-width: 200px;" id="busTitle">Select Seats</h5>
+            <div style="width: 50px;"></div>
         </div>
     </div>
 
-    <div class="container py-5">
+    <div class="container">
         
+        <!-- Interactive Controls -->
+        <div class="controls-toolbar">
+            <button class="tool-btn btn-reset" onclick="resetSelection()">
+                <i class="fas fa-undo me-1"></i> Reset
+            </button>
+            <button class="tool-btn active" onclick="filterView('all')">
+                <i class="fas fa-th me-1"></i> All
+            </button>
+            <button class="tool-btn" onclick="filterView('window')">
+                <i class="far fa-square me-1"></i> Window
+            </button>
+            <button class="tool-btn" onclick="filterView('aisle')">
+                <i class="fas fa-grip-lines-vertical me-1"></i> Aisle
+            </button>
+        </div>
+
         <!-- Sun Analyzer Section -->
         <div class="analyzer-card">
             <div class="row align-items-end">
                 <div class="col-md-5 mb-3 mb-md-0">
-                    <label class="form-label small fw-bold text-muted">JOURNEY TIME</label>
+                    <label class="form-label small fw-bold text-muted">JOURNEY START TIME</label>
                     <input type="datetime-local" id="tripTime" class="input-modern">
                 </div>
                 <div class="col-md-7">
-                    <button class="btn-sun-check" onclick="sunlightCheck()">
-                        <i class="fas fa-sun"></i> Check Best Side to Avoid Sunlight
+                    <button class="btn-sun-check" onclick="analyzeSunlight()">
+                        <i class="fas fa-sun"></i> Analyze Sun Route
+                    </button>
+                    <button id="autoSelectBtn" class="sun-action-btn" onclick="autoSelectBest()">
+                        <i class="fas fa-magic me-2"></i> Auto-Select Best Seats
                     </button>
                 </div>
             </div>
-
-            <!-- Result Box -->
-            <div id="sunResult" class="sun-result-box">
-                <div class="d-flex align-items-center gap-3">
-                    <i class="fas fa-shield-alt fa-2x text-success"></i>
-                    <div>
-                        <h6 class="fw-bold m-0 mb-1">Smart Sun Suggestion</h6>
-                        <p class="m-0 small text-muted" id="sunText">Select a journey time to analyze.</p>
-                    </div>
-                </div>
-            </div>
+            <div id="sunStatus" class="sun-status-text"></div>
         </div>
 
         <!-- Bus Seat Map -->
         <div class="bus-container">
+            <div class="scan-line" id="scanLine"></div>
             <div class="driver-area">
                 <div class="driver-icon"><i class="fas fa-steering-wheel"></i></div>
             </div>
 
             <!-- Labels -->
-            <div class="seat-grid mb-2">
-                <div class="aisle-label">Window</div>
-                <div class="aisle-label">Aisle</div>
-                <div></div> <!-- Aisle Gap -->
-                <div class="aisle-label">Aisle</div>
-                <div class="aisle-label">Window</div>
+            <div class="seat-grid mb-2" id="gridLabels">
+                <div class="aisle-label small text-muted">Win</div>
+                <div class="aisle-label small text-muted">Ais</div>
+                <div></div> 
+                <div class="aisle-label small text-muted">Ais</div>
+                <div class="aisle-label small text-muted">Win</div>
             </div>
 
-            <!-- Rows -->
-            <!-- Left Side (L1, L2, etc) | Aisle | Right Side (R1, R2, etc) -->
-            <div class="seat-grid">
-                <!-- Row 1 -->
-                <div class="seat" id="L1" onclick="selectSeat(this, 'L1')">L1</div>
-                <div class="seat" onclick="selectSeat(this, 'L2')">L2</div>
-                <div></div>
-                <div class="seat" onclick="selectSeat(this, 'R1')">R1</div>
-                <div class="seat sold">R2</div>
-
-                <!-- Row 2 -->
-                <div class="seat" onclick="selectSeat(this, 'L3')">L3</div>
-                <div class="seat" onclick="selectSeat(this, 'L4')">L4</div>
-                <div></div>
-                <div class="seat" onclick="selectSeat(this, 'R3')">R3</div>
-                <div class="seat" onclick="selectSeat(this, 'R4')">R4</div>
-
-                <!-- Row 3 -->
-                <div class="seat sold">L5</div>
-                <div class="seat sold">L6</div>
-                <div></div>
-                <div class="seat" onclick="selectSeat(this, 'R5')">R5</div>
-                <div class="seat" onclick="selectSeat(this, 'R6')">R6</div>
-
-                <!-- Row 4 -->
-                <div class="seat" onclick="selectSeat(this, 'L7')">L7</div>
-                <div class="seat" onclick="selectSeat(this, 'L8')">L8</div>
-                <div></div>
-                <div class="seat" onclick="selectSeat(this, 'R7')">R7</div>
-                <div class="seat" onclick="selectSeat(this, 'R8')">R8</div>
+            <!-- Dynamic Rows Container -->
+            <div id="seatContainer" class="seat-grid">
+                <!-- Injected via JS -->
             </div>
         </div>
         
-        <div class="text-center mt-4">
-            <small class="text-muted">
-                <span class="me-3"><i class="fas fa-square text-secondary"></i> Available</span>
+        <div class="text-center mt-4 mb-5">
+            <small class="text-muted fw-bold">
+                <span class="me-3"><i class="fas fa-square text-secondary"></i> Standard</span>
+                <span class="me-3"><i class="fas fa-square border-warning" style="border: 2px solid gold; display:inline-block; width:12px; height:12px;"></i> Premium</span>
                 <span class="me-3"><i class="fas fa-square text-success"></i> Sun Safe</span>
-                <span class="me-3"><i class="fas fa-square text-dark opacity-25"></i> Sold</span>
+                <span class="me-3"><i class="fas fa-square text-dark" style="background:#000; border-radius:2px; width:12px; height:12px; display:inline-block;"></i> Sold</span>
             </small>
         </div>
     </div>
@@ -367,71 +457,118 @@
         </div>
         <div>
             <div class="small text-white-50">Seats: <span id="selectedSeatsText">None</span></div>
-            <button class="btn btn-light btn-sm fw-bold rounded-pill px-3" onclick="alert('Proceeding to Payment...')">Pay</button>
+            <!-- UPDATED PAY BUTTON -->
+            <button class="btn btn-light btn-sm fw-bold rounded-pill px-3" onclick="goToPayment()">
+                Pay
+            </button>
         </div>
     </div>
 
     <script>
-        // Initialize Date Input to current time
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('tripTime').value = now.toISOString().slice(0,16);
+        // --- 1. CONFIG & DATA ---
+        const cityCoords = {
+            'Bangalore': { lat: 12.9716, lon: 77.5946 },
+            'Kochi': { lat: 9.9312, lon: 76.2673 },
+            'Chennai': { lat: 13.0827, lon: 80.2707 },
+            'Mumbai': { lat: 19.0760, lon: 72.8777 },
+            'Delhi': { lat: 28.7041, lon: 77.1025 },
+            'Goa': { lat: 15.2993, lon: 74.1240 },
+            'Jaipur': { lat: 26.9124, lon: 75.7873 },
+            'Hyderabad': { lat: 17.3850, lon: 78.4867 },
+            'Pune': { lat: 18.5204, lon: 73.8567 },
+            'Trivandrum': { lat: 8.5241, lon: 76.9366 },
+            'Agra': { lat: 27.1751, lon: 78.0421 },
+            'Vijayawada': { lat: 16.5062, lon: 80.6480 },
+            'Mysore': { lat: 12.2958, lon: 76.6394 }
+        };
 
-        // --- Sunlight Logic ---
-        function sunlightCheck() {
-            const inputTime = document.getElementById('tripTime').value;
-            if(!inputTime) return alert("Please select a time first!");
+        let selectedSeats = [];
+        let basePrice = 0;
+        let busType = ''; 
 
-            const time = new Date(inputTime);
-            const resultBox = document.getElementById('sunResult');
-            const resultText = document.getElementById('sunText');
+        document.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            basePrice = parseInt(params.get('price')) || 0;
+            busType = params.get('isSleeper') === 'true' ? 'sleeper' : 'seater';
             
-            // Coordinates for Kochi (Demo)
-            const lat = 9.93; 
-            const lon = 76.26; 
+            document.getElementById('busTitle').innerText = params.get('name') || "Select Seats";
+            
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('tripTime').value = now.toISOString().slice(0,16);
 
-            const sun = SunCalc.getPosition(time, lat, lon);
-            const angle = sun.azimuth * (180 / Math.PI); // Degrees
+            generateSeatLayout(busType);
+        });
 
-            // Logic: If angle > 180, Left side is safer, else Right side
-            // Note: This is a simplified heuristic for the UI demo
-            const isLeftSafe = angle > 180; 
+        // --- 2. GENERATE SEATS ---
+        function generateSeatLayout(type) {
+            const container = document.getElementById('seatContainer');
+            const labels = document.getElementById('gridLabels');
+            container.innerHTML = '';
+            
+            const randomSold = [];
+            while(randomSold.length < 8) { 
+                const r = Math.floor(Math.random() * 40) + 1; 
+                if(!randomSold.includes(r)) randomSold.push(r);
+            }
 
-            // 1. Reset Seat Styles
-            document.querySelectorAll('.seat').forEach(seat => {
-                seat.classList.remove('sun-safe', 'sun-hot');
-            });
-
-            // 2. Apply Suggestion Styles
-            const leftSeats = document.querySelectorAll('.seat[id^="L"]');
-            const rightSeats = document.querySelectorAll('.seat[id^="R"]');
-
-            resultBox.style.display = 'block';
-            resultBox.className = 'sun-result-box alert alert-success'; // Make it green
-
-            if (isLeftSafe) {
-                leftSeats.forEach(s => {
-                    if(!s.classList.contains('sold') && !s.classList.contains('selected')) s.classList.add('sun-safe');
-                });
-                rightSeats.forEach(s => s.classList.add('sun-hot'));
-                resultText.innerHTML = "The sun will be on the <b>Right</b>. <br>We recommend choosing seats on the <b>Left (L)</b> side.";
+            if (type === 'sleeper') {
+                container.classList.add('sleeper-layout');
+                labels.innerHTML = `<div class="aisle-label">L (Window)</div><div></div><div class="aisle-label">R (Window)</div>`;
+                for(let i=1; i<=10; i++) {
+                    let price = basePrice + (i <= 2 ? 50 : 0);
+                    createSeat(container, `U${i}`, randomSold.includes(i), 'seat sleeper upper', `U${i}`, price);
+                    createSeat(container, `L${i}`, randomSold.includes(i+40), 'seat sleeper', `L${i}`, price);
+                }
             } else {
-                rightSeats.forEach(s => {
-                    if(!s.classList.contains('sold') && !s.classList.contains('selected')) s.classList.add('sun-safe');
-                });
-                leftSeats.forEach(s => s.classList.add('sun-hot'));
-                resultText.innerHTML = "The sun will be on the <b>Left</b>. <br>We recommend choosing seats on the <b>Right (R)</b> side.";
+                container.classList.remove('sleeper-layout');
+                labels.innerHTML = `<div class="aisle-label">Win</div><div class="aisle-label">Ais</div><div></div><div class="aisle-label">Ais</div><div class="aisle-label">Win</div>`;
+                for(let i=1; i<=10; i++) {
+                    let seatPrice = basePrice + (i <= 2 ? 50 : 0);
+                    let isPremium = i <= 2;
+                    const isSold = randomSold.includes(i);
+                    createSeat(container, `L${i}`, isSold, 'seat', `L${i}`, seatPrice, isPremium);
+                    createSeat(container, `M${i}`, randomSold.includes(i+100), 'seat', `M${i}`, seatPrice, isPremium);
+                    const gap = document.createElement('div'); container.appendChild(gap);
+                    createSeat(container, `A${i}`, randomSold.includes(i+200), 'seat', `A${i}`, seatPrice, isPremium);
+                    createSeat(container, `R${i}`, randomSold.includes(i+300), 'seat', `R${i}`, seatPrice, isPremium);
+                }
             }
         }
 
-        // --- Seat Selection Logic ---
-        let selectedSeats = [];
-        const pricePerSeat = 950;
+        function createSeat(container, id, isSold, classes, label, price, isPremium = false) {
+            const div = document.createElement('div');
+            div.className = classes;
+            if(isPremium) div.classList.add('premium');
+            div.id = id;
+            // If sold, don't show text, rely on CSS lock icon
+            if(isSold) {
+                div.innerText = ''; 
+            } else {
+                div.innerText = label;
+            }
+            div.dataset.price = price;
+            
+            if(!isSold && Math.random() > 0.7) {
+                const icon = document.createElement('i');
+                icon.className = `amenity-icon fas ${Math.random() > 0.5 ? 'fa-bolt' : 'fa-wifi'}`;
+                div.appendChild(icon);
+            }
 
+            setTimeout(() => div.classList.add('animate-in'), Math.random() * 500);
+
+            if(isSold) {
+                div.classList.add('sold');
+                div.onclick = null; // Nullify click
+            } else {
+                div.onclick = function() { selectSeat(div, id); };
+            }
+            container.appendChild(div);
+        }
+
+        // --- 3. SELECTION & INTERACTION ---
         function selectSeat(element, seatId) {
-            if (element.classList.contains('sold')) return;
-
-            // Toggle Selection
+            if (element.classList.contains('sold') || element.classList.contains('sun-hot')) return;
             if (element.classList.contains('selected')) {
                 element.classList.remove('selected');
                 selectedSeats = selectedSeats.filter(s => s !== seatId);
@@ -439,22 +576,153 @@
                 element.classList.add('selected');
                 selectedSeats.push(seatId);
             }
-
             updateSummary();
         }
 
         function updateSummary() {
             const bar = document.getElementById('summaryBar');
             const count = selectedSeats.length;
-            const total = count * pricePerSeat;
+            
+            let total = 0;
+            selectedSeats.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) total += parseInt(el.dataset.price);
+            });
 
             document.getElementById('selectedSeatsText').innerText = selectedSeats.join(', ') || "None";
-            document.getElementById('totalPrice').innerText = '₹' + total;
+            document.getElementById('totalPrice').innerText = '₹' + total.toLocaleString('en-IN');
+            if (count > 0) bar.classList.add('visible');
+            else bar.classList.remove('visible');
+        }
 
-            if (count > 0) {
-                bar.classList.add('visible');
-            } else {
-                bar.classList.remove('visible');
+        function resetSelection() {
+            selectedSeats.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.remove('selected');
+            });
+            selectedSeats = [];
+            updateSummary();
+        }
+
+        function filterView(type) {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            const allSeats = document.querySelectorAll('.seat');
+            allSeats.forEach(seat => {
+                const id = seat.id;
+                let show = true;
+                if(type === 'window' && !(id.startsWith('L') || id.startsWith('R'))) show = false;
+                if(type === 'aisle' && (id.startsWith('L') || id.startsWith('R'))) show = false;
+                seat.style.display = show ? 'flex' : 'none';
+            });
+        }
+
+        // --- 4. SMART SUNLIGHT ---
+        function analyzeSunlight() {
+            const timeInput = document.getElementById('tripTime').value;
+            const params = new URLSearchParams(window.location.search);
+            const fromCity = params.get('from');
+            
+            if(!timeInput) return alert("Please select a journey time.");
+            if(!fromCity) return; 
+
+            const startTime = new Date(timeInput);
+            const coords = cityCoords[fromCity] || { lat: 20, lon: 77 }; 
+            const sunPos = SunCalc.getPosition(startTime, coords.lat, coords.lon);
+            const azimuth = sunPos.azimuth * (180 / Math.PI);
+            const altitude = sunPos.altitude * (180 / Math.PI);
+
+            let safeSide = 'Right';
+            let unsafeSide = 'Left';
+            
+            if (azimuth < 180) { safeSide = 'Right'; unsafeSide = 'Left'; }
+            else { safeSide = 'Left'; unsafeSide = 'Right'; }
+
+            const isHighNoon = altitude > 50;
+            const scanLine = document.getElementById('scanLine');
+            const statusBox = document.getElementById('sunStatus');
+            const autoBtn = document.getElementById('autoSelectBtn');
+            const allSeats = document.querySelectorAll('.seat:not(.sold):not(.selected)');
+            
+            scanLine.style.display = 'block';
+            statusBox.style.display = 'none';
+            autoBtn.style.display = 'none';
+            
+            // Remove previous highlights
+            allSeats.forEach(s => s.classList.remove('sun-safe', 'sun-hot'));
+
+            setTimeout(() => {
+                scanLine.style.display = 'none';
+                
+                if(isHighNoon) {
+                    statusBox.innerHTML = `<i class="fas fa-sun fa-beat text-warning"></i> It's high noon! <b>Window seats are hot</b>. We recommend <b>Aisle</b> seats.`;
+                    statusBox.style.borderColor = "#ffc107"; statusBox.style.color = "#856404";
+                    allSeats.forEach(s => {
+                        if(s.innerText.includes('M') || s.innerText.includes('A') || s.innerText.startsWith('U')) s.classList.add('sun-safe');
+                        else s.classList.add('sun-hot');
+                    });
+                } else {
+                    statusBox.innerHTML = `<i class="fas fa-check-circle text-success"></i> Sun is on the <b>${unsafeSide}</b>. We recommend seats on the <b>${safeSide}</b> side.`;
+                    statusBox.style.borderColor = "#198754"; statusBox.style.color = "#0f5132";
+                    allSeats.forEach(s => {
+                        let isSafe = false;
+                        if(safeSide === 'Left' && (s.id.startsWith('L'))) isSafe = true;
+                        if(safeSide === 'Right' && (s.id.startsWith('R'))) isSafe = true;
+                        if(isSafe) s.classList.add('sun-safe');
+                        else s.classList.add('sun-hot');
+                    });
+                }
+                
+                statusBox.style.display = 'block';
+                const safeCount = document.querySelectorAll('.seat.sun-safe').length;
+                if(safeCount > 0) autoBtn.style.display = 'block';
+
+            }, 2000); 
+        }
+
+        function autoSelectBest() {
+            const safeSeats = document.querySelectorAll('.seat.sun-safe:not(.selected)');
+            if(safeSeats.length === 0) return alert("No safe seats available!");
+            let count = 0;
+            safeSeats.forEach(seat => {
+                if(count < 2) {
+                    seat.click();
+                    count++;
+                }
+            });
+        }
+
+        // --- 5. PAYMENT REDIRECT ---
+        function goToPayment() {
+            try {
+                // 1. Get Values
+                const totalElement = document.getElementById('totalPrice');
+                if (!totalElement) {
+                    alert("Error: Could not find total price element.");
+                    return;
+                }
+                const total = totalElement.innerText.replace('₹', '').replace(/,/g, '').trim();
+                const seats = selectedSeats.join(',');
+                const busName = document.getElementById('busTitle').innerText;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const from = urlParams.get('from');
+                const to = urlParams.get('to');
+                const isSleeper = urlParams.get('isSleeper');
+
+                // 2. Check for errors
+                if (!total) return alert("Please select at least one seat.");
+                if (!seats) return alert("No seats selected.");
+
+                // 3. Construct URL
+                const targetUrl = `payment.html?amount=${total}&seats=${seats}&bus=${encodeURIComponent(busName)}&from=${from}&to=${to}&isSleeper=${isSleeper}`;
+
+                // 4. Redirect
+                window.location.href = targetUrl;
+
+            } catch (error) {
+                console.error(error);
+                alert("An error occurred: " + error.message);
             }
         }
     </script>
