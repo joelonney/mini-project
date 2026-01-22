@@ -1,2 +1,1 @@
-# mini-project
-Mini project developed as a team
+git add README.md
