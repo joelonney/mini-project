@@ -383,6 +383,7 @@
             line-height: 1; 
             background: linear-gradient(180deg, var(--text-dark) 0%, var(--text-muted) 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
