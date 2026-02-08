@@ -279,71 +279,6 @@
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* --- Success / Receipt --- */
-        .success-modal {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: white;
-            padding: 40px;
-            border-radius: 24px;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.2);
-            z-index: 2001;
-            text-align: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.4s;
-            max-width: 90%;
-            width: 400px;
-        }
-        
-        .success-modal.active {
-            opacity: 1;
-            pointer-events: all;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .receipt {
-            background: #fff;
-            border: 1px dashed #ddd;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            position: relative;
-            transform: rotate(-1deg); /* Slight tilt for paper effect */
-        }
-        /* Receipt Zigzag */
-        .receipt::after {
-            content: " "; position: absolute; bottom: -10px; left: 0; right: 0;
-            background: linear-gradient(45deg, #fff 33.333%, transparent 33.333%),
-                        linear-gradient(-45deg, #fff 33.333%, transparent 33.333%);
-            background-size: 20px 20px;
-            height: 20px; width: 100%;
-        }
-
-        .timeline-item {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-            text-align: left;
-        }
-        .timeline-icon {
-            width: 32px; height: 32px; background: #e8f5e9; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin-right: 15px; color: #d35400; flex-shrink: 0;
-        }
-        .timeline-text { font-size: 0.9rem; font-weight: 500; }
-        .timeline-text strong { color: var(--text-main); display: block; }
-        .timeline-text small { color: var(--text-muted); font-size: 0.8rem; }
-
-        .success-check {
-            width: 80px; height: 80px; background: #10b981; border-radius: 50%;
-            color: white; font-size: 2.5rem; display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-            animation: popIn 0.5s ease;
-        }
-        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -352,7 +287,8 @@
     <!-- Header -->
     <div class="checkout-header">
         <div class="container d-flex justify-content-between align-items-center">
-            <a href="seats.html" class="header-link">
+            <!-- Changed href to seats.php -->
+            <a href="javascript:history.back()" class="header-link">
                 <i class="fas fa-arrow-left me-2"></i> Back to Seats
             </a>
             <div class="d-flex align-items-center gap-3">
@@ -413,26 +349,33 @@
             <div class="col-lg-8">
                 <div class="glass-card">
                     
-                    <!-- Payment Tabs -->
-                    <div class="payment-tabs">
-                        <div class="tab-item active" onclick="switchTab('card')">
-                            <i class="far fa-credit-card"></i> Card
-                        </div>
-                        <div class="tab-item" onclick="switchTab('upi')">
-                            <i class="fas fa-mobile-alt"></i> UPI
-                        </div>
-                        <div class="tab-item" onclick="switchTab('net')">
-                            <i class="fas fa-university"></i> Net Banking
-                        </div>
-                    </div>
-
-                    <!-- Form Container -->
-                    <div id="paymentContainer">
+                    <!-- START FORM TAG -->
+                    <form id="paymentForm" action="includes/process_booking.php" method="POST">
                         
+                        <!-- HIDDEN INPUTS FOR BACKEND -->
+                        <input type="hidden" name="bus_id" id="inputBusId" value="">
+                        <input type="hidden" name="travel_date" id="inputDate" value="">
+                        <input type="hidden" name="seats" id="inputSeats" value="">
+                        <input type="hidden" name="amount" id="inputAmount" value="">
+                        <input type="hidden" name="from" id="inputFrom" value="">
+                        <input type="hidden" name="to" id="inputTo" value="">
+
+                        <!-- Payment Tabs -->
+                        <div class="payment-tabs">
+                            <div class="tab-item active" onclick="switchTab('card')">
+                                <i class="far fa-credit-card"></i> Card
+                            </div>
+                            <div class="tab-item" onclick="switchTab('upi')">
+                                <i class="fas fa-mobile-alt"></i> UPI
+                            </div>
+                            <div class="tab-item" onclick="switchTab('net')">
+                                <i class="fas fa-university"></i> Net Banking
+                            </div>
+                        </div>
+
                         <!-- 1. CARD FORM -->
                         <div id="card-section">
-                            
-                            <!-- Interactive Visual Card -->
+                            <!-- Visual Card -->
                             <div class="card-visual-container">
                                 <div class="credit-card">
                                     <div style="position: absolute; top: 20px; right: 20px; font-size: 2rem; font-weight: 900; opacity: 0.9;">
@@ -495,7 +438,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. UPI FORM (Hidden) -->
+                        <!-- 2. UPI FORM -->
                         <div id="upi-section" class="hidden">
                             <div class="upi-grid">
                                 <div class="upi-btn selected" onclick="selectUpi(this)">
@@ -510,17 +453,6 @@
                                     <i class="fas fa-wallet" style="color:#00B9F1"></i>
                                     <span>Paytm</span>
                                 </div>
-                                <div class="upi-btn" onclick="selectUpi(this)">
-                                    <i class="fas fa-university" style="color:#0a3d62"></i>
-                                    <span>Amazon</span>
-                                </div>
-                                <div class="upi-btn" onclick="selectUpi(this)">
-                                    <i class="fas fa-mobile" style="color:#ff9f43"></i>
-                                </div>
-                                <div class="upi-btn" onclick="selectUpi(this)">
-                                    <i class="fas fa-rupee-sign" style="color:#000"></i>
-                                    <span>Other UPI</span>
-                                </div>
                             </div>
 
                             <div class="text-center mb-3">
@@ -534,7 +466,7 @@
                             </div>
                         </div>
 
-                        <!-- 3. NET BANKING FORM (Hidden) -->
+                        <!-- 3. NET BANKING FORM -->
                         <div id="net-section" class="hidden">
                             <div class="input-wrapper">
                                 <label class="form-label-modern">Select Bank</label>
@@ -553,15 +485,14 @@
                             </div>
                         </div>
 
-                    </div>
+                        <!-- Pay Button -->
+                        <div class="mt-4">
+                            <button type="submit" class="btn-pay" onclick="return processPayment()">
+                                <i class="fas fa-lock"></i> Confirm Payment <span id="btnAmount">₹0</span>
+                            </button>
+                        </div>
 
-                    <!-- Pay Button -->
-                    <div class="mt-4">
-                        <button class="btn-pay" onclick="processPayment()">
-                            <i class="fas fa-lock"></i>
-                            Confirm Payment <span id="btnAmount">₹0</span>
-                        </button>
-                    </div>
+                    </form> <!-- END FORM -->
                 </div>
             </div>
         </div>
@@ -572,44 +503,6 @@
         <div class="loader-visual"></div>
         <h4 class="fw-bold mt-3">Processing Transaction...</h4>
         <p class="text-muted">Please do not close this window.</p>
-    </div>
-
-    <!-- Success Receipt Modal -->
-    <div class="success-modal" id="successModal">
-        <div class="success-check">
-            <i class="fas fa-check"></i>
-        </div>
-        <h3 class="fw-bold mb-2">Payment Successful!</h3>
-        <p class="text-muted small mb-4">Your ticket has been booked and emailed to you.</p>
-
-        <!-- Digital Receipt -->
-        <div class="receipt">
-            <h6 class="fw-bold border-bottom pb-2 mb-3">Transaction Details</h6>
-            
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-check"></i></div>
-                <div class="timeline-text">
-                    <strong>Transaction Authorized</strong>
-                    <small>Verified by SmartPay</small>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon" style="background:#d1fae5; color:#059669"><i class="fas fa-check"></i></div>
-                <div class="timeline-text">
-                    <strong>Amount Captured</strong>
-                    <small id="receiptAmount">₹0</small>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon" style="background:#e0e7ff; color:#3730a3"><i class="fas fa-ticket-alt"></i></div>
-                <div class="timeline-text">
-                    <strong>Ticket Generated</strong>
-                    <small id="receiptId">ID: #849203</small>
-                </div>
-            </div>
-        </div>
-
-        <a href="index.html" class="btn btn-outline-dark rounded-pill px-4 mt-4 fw-bold">Go to Home</a>
     </div>
 
     <script>
@@ -624,18 +517,26 @@
             const from = params.get('from');
             const to = params.get('to');
             const isSleeper = params.get('isSleeper');
+            
+            // IMPORTANT: Capture bus_id and date for backend processing
+            const bus_id = params.get('bus_id'); 
+            const travel_date = params.get('date'); 
 
             // Populate Summary
             document.getElementById('summaryTotal').innerText = '₹' + amount;
             document.getElementById('btnAmount').innerText = '₹' + amount;
-            document.getElementById('receiptAmount').innerText = '₹' + amount;
             document.getElementById('summarySeats').innerText = seats.replace(/,/g, ', ');
             document.getElementById('summaryBusName').innerText = decodeURIComponent(bus);
             document.getElementById('summaryRoute').innerText = `${from} to ${to}`;
             document.getElementById('summaryType').innerText = isSleeper === 'true' ? 'Sleeper Bus' : 'Seater Bus';
             
-            // Generate Random Transaction ID
-            document.getElementById('receiptId').innerText = 'ID: #' + Math.floor(100000 + Math.random() * 900000);
+            // Populate Hidden Inputs (Crucial for backend)
+            if(bus_id) document.getElementById('inputBusId').value = bus_id;
+            if(travel_date) document.getElementById('inputDate').value = travel_date;
+            document.getElementById('inputSeats').value = seats;
+            document.getElementById('inputAmount').value = amount;
+            document.getElementById('inputFrom').value = from;
+            document.getElementById('inputTo').value = to;
         });
 
         // --- 2. TAB LOGIC ---
@@ -715,16 +616,16 @@
 
             if(!isValid) return;
 
-            // Show Processing
+            // Show Loader
             const loader = document.getElementById('paymentOverlay');
             loader.style.display = 'flex';
 
-            // Simulate API Delay
+            // Simulate API Delay then Submit
             setTimeout(() => {
-                loader.style.display = 'none';
-                const modal = document.getElementById('successModal');
-                modal.classList.add('active');
-            }, 2500);
+                document.getElementById('paymentForm').submit(); 
+            }, 2000); 
+            
+            return false; // Prevent immediate submission
         }
     </script>
 </body>

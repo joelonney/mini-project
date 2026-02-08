@@ -1,3 +1,61 @@
+<?php
+include 'includes/db.php';
+
+// 1. Get Data from URL
+ $bus_id = isset($_GET['bus_id']) ? intval($_GET['bus_id']) : 0;
+ $travel_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+
+// 2. Fetch Bus Details (to verify bus exists and get type)
+ $busQuery = $conn->prepare("SELECT * FROM buses WHERE bus_id = ?");
+ $busQuery->bind_param("i", $bus_id);
+ $busQuery->execute();
+ $busResult = $busQuery->get_result();
+ $busInfo = $busResult->fetch_assoc();
+
+if (!$busInfo) {
+    die("Bus not found.");
+}
+
+// 3. Fetch ALL seats for this bus
+ $seatData = []; 
+// We fetch seat_id and seat_number
+ $seatsSql = "SELECT seat_id, seat_number FROM seats WHERE bus_id = ?";
+ $seatsStmt = $conn->prepare($seatsSql);
+ $seatsStmt->bind_param("i", $bus_id);
+ $seatsStmt->execute();
+ $seatsRes = $seatsStmt->get_result();
+
+// Get Booked Seats for this specific date
+ $bookedSeatsSql = "SELECT seat_id FROM bookings WHERE bus_id = ? AND travel_date = ? AND status = 'BOOKED'";
+ $bookedStmt = $conn->prepare($bookedSeatsSql);
+ $bookedStmt->bind_param("is", $bus_id, $travel_date);
+ $bookedStmt->execute();
+ $bookedRes = $bookedStmt->get_result();
+
+ $booked_ids = [];
+while($row = $bookedRes->fetch_assoc()){
+    $booked_ids[] = $row['seat_id'];
+}
+
+// 4. Build Data Array for JavaScript
+while($row = $seatsRes->fetch_assoc()){
+    $status = 'available';
+    $price = $_GET['price']; // Base price from search
+
+    // Check if booked
+    if(in_array($row['seat_id'], $booked_ids)){
+        $status = 'sold';
+    }
+    
+    $seatData[] = [
+        'id' => $row['seat_id'],
+        'number' => $row['seat_number'],
+        'status' => $status,
+        'price' => $price
+    ];
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,17 +155,6 @@
             position: relative;
             overflow: hidden;
         }
-        /* Subtle background shine for card */
-        .analyzer-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,152,0,0.03) 0%, transparent 70%);
-            pointer-events: none;
-        }
 
         .input-modern {
             border: 1px solid #eee;
@@ -141,7 +188,7 @@
         .btn-sun-check:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245, 124, 0, 0.35); }
 
         .sun-action-btn {
-            background: #28a745; /* Brighter Green */
+            background: #28a745; 
             color: white;
             border: none;
             width: 100%;
@@ -149,7 +196,7 @@
             padding: 12px;
             border-radius: 12px;
             font-weight: 600;
-            display: none; /* Hidden initially */
+            display: none; 
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
@@ -177,7 +224,7 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.08);
             max-width: 600px;
             margin: 0 auto;
-            border: 1px solid #e9ecef; /* Metallic feel */
+            border: 1px solid #e9ecef; 
             position: relative;
             margin-top: 30px;
         }
@@ -226,7 +273,7 @@
             color: #888;
             border: 2px solid transparent;
             width: 52px;
-            opacity: 0; /* For entrance animation */
+            opacity: 0; 
             transform: translateY(15px);
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
@@ -234,22 +281,9 @@
         .seat.animate-in { animation: seatPop 0.5s forwards; }
         @keyframes seatPop { to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Premium Seat Update --- */
         .seat.premium { 
             border-color: var(--premium-border); 
             background: linear-gradient(145deg, #fff8e1, #ffecb3);
-        }
-        .seat.premium::before {
-            content: 'Premium';
-            position: absolute;
-            top: -15px;
-            font-size: 0.4rem;
-            background: var(--premium-border);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: none; /* Show on hover only */
-            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
         }
         .seat.premium:hover::before { display: block; }
         .seat.premium:hover { transform: scale(1.1) translateY(-2px); }
@@ -274,19 +308,17 @@
             border-color: white;
         }
 
-        /* --- SOLD SEATS: BLACK & DISABLED --- */
         .seat.sold {
-            background: #000000; /* SOLID BLACK */
-            color: #444; /* Dark text, almost invisible */
+            background: #000000; 
+            color: #444; 
             cursor: not-allowed;
-            pointer-events: none; /* STRICTLY DISABLED */
+            pointer-events: none; 
             border-color: #222;
             box-shadow: none;
-            transform: none !important; /* No hover effect */
+            transform: none !important; 
         }
-        /* Add Lock Icon for sold seats */
         .seat.sold::after {
-            content: '\f023'; /* FontAwesome Lock */
+            content: '\f023'; 
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             position: absolute;
@@ -297,7 +329,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* Amenity Icons */
         .amenity-icon {
             position: absolute;
             bottom: 3px;
@@ -307,11 +338,10 @@
             pointer-events: none;
         }
 
-        /* --- SUN SAFE: BRIGHT GREEN GLOW --- */
         .seat.sun-safe {
             background: #198754 !important; 
             color: white !important;
-            border: 2px solid #00ff88; /* Neon Border */
+            border: 2px solid #00ff88; 
             box-shadow: 0 0 25px rgba(0, 255, 136, 0.6), inset 0 0 10px rgba(255,255,255,0.2);
             animation: pulse-green 2s infinite;
             z-index: 5;
@@ -352,7 +382,6 @@
             100% { top: 90%; opacity: 0; }
         }
 
-        /* --- Floating Summary --- */
         .summary-fab {
             position: fixed; bottom: 25px; left: 50%;
             transform: translateX(-50%) translateY(100px);
@@ -369,10 +398,9 @@
 </head>
 <body>
 
-    <!-- Header -->
     <div class="top-bar">
         <div class="container d-flex justify-content-between align-items-center">
-            <a href="index.html" class="back-btn">
+            <a href="javascript:history.back()" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
             <h5 class="fw-bold m-0 text-truncate" style="max-width: 200px;" id="busTitle">Select Seats</h5>
@@ -381,8 +409,6 @@
     </div>
 
     <div class="container">
-        
-        <!-- Interactive Controls -->
         <div class="controls-toolbar">
             <button class="tool-btn btn-reset" onclick="resetSelection()">
                 <i class="fas fa-undo me-1"></i> Reset
@@ -398,7 +424,6 @@
             </button>
         </div>
 
-        <!-- Sun Analyzer Section -->
         <div class="analyzer-card">
             <div class="row align-items-end">
                 <div class="col-md-5 mb-3 mb-md-0">
@@ -417,14 +442,12 @@
             <div id="sunStatus" class="sun-status-text"></div>
         </div>
 
-        <!-- Bus Seat Map -->
         <div class="bus-container">
             <div class="scan-line" id="scanLine"></div>
             <div class="driver-area">
                 <div class="driver-icon"><i class="fas fa-steering-wheel"></i></div>
             </div>
 
-            <!-- Labels -->
             <div class="seat-grid mb-2" id="gridLabels">
                 <div class="aisle-label small text-muted">Win</div>
                 <div class="aisle-label small text-muted">Ais</div>
@@ -433,7 +456,6 @@
                 <div class="aisle-label small text-muted">Win</div>
             </div>
 
-            <!-- Dynamic Rows Container -->
             <div id="seatContainer" class="seat-grid">
                 <!-- Injected via JS -->
             </div>
@@ -449,7 +471,6 @@
         </div>
     </div>
 
-    <!-- Floating Summary Bar -->
     <div id="summaryBar" class="summary-fab">
         <div>
             <div class="small text-white-50">Total Price</div>
@@ -457,7 +478,6 @@
         </div>
         <div>
             <div class="small text-white-50">Seats: <span id="selectedSeatsText">None</span></div>
-            <!-- UPDATED PAY BUTTON -->
             <button class="btn btn-light btn-sm fw-bold rounded-pill px-3" onclick="goToPayment()">
                 Pay
             </button>
@@ -500,38 +520,61 @@
             generateSeatLayout(busType);
         });
 
-        // --- 2. GENERATE SEATS ---
+        // --- 2. GENERATE SEATS (UPDATED) ---
         function generateSeatLayout(type) {
             const container = document.getElementById('seatContainer');
             const labels = document.getElementById('gridLabels');
             container.innerHTML = '';
             
-            const randomSold = [];
-            while(randomSold.length < 8) { 
-                const r = Math.floor(Math.random() * 40) + 1; 
-                if(!randomSold.includes(r)) randomSold.push(r);
-            }
-
+            // PHP Data Injection
+            const serverSeatData = <?php echo json_encode($seatData); ?>;
+            
+            // Group data into rows based on your naming convention (L, M, A, R)
+            // This logic maps DB data to the visual grid
+            
             if (type === 'sleeper') {
                 container.classList.add('sleeper-layout');
                 labels.innerHTML = `<div class="aisle-label">L (Window)</div><div></div><div class="aisle-label">R (Window)</div>`;
+                
+                // Create map for easy lookup
+                let seatMap = {};
+                serverSeatData.forEach(s => seatMap[s.number] = s);
+
                 for(let i=1; i<=10; i++) {
-                    let price = basePrice + (i <= 2 ? 50 : 0);
-                    createSeat(container, `U${i}`, randomSold.includes(i), 'seat sleeper upper', `U${i}`, price);
-                    createSeat(container, `L${i}`, randomSold.includes(i+40), 'seat sleeper', `L${i}`, price);
+                    // Upper Sleeper
+                    let uKey = 'U' + i;
+                    let uData = seatMap[uKey] || {status: 'available', price: basePrice};
+                    let isSold = (uData.status === 'sold');
+                    createSeat(container, uKey, isSold, 'seat sleeper upper', uKey, uData.price);
+
+                    // Lower Sleeper
+                    let lKey = 'L' + i;
+                    let lData = seatMap[lKey] || {status: 'available', price: basePrice};
+                    isSold = (lData.status === 'sold');
+                    createSeat(container, lKey, isSold, 'seat sleeper', lKey, lData.price);
                 }
             } else {
                 container.classList.remove('sleeper-layout');
                 labels.innerHTML = `<div class="aisle-label">Win</div><div class="aisle-label">Ais</div><div></div><div class="aisle-label">Ais</div><div class="aisle-label">Win</div>`;
+
+                let seatMap = {};
+                serverSeatData.forEach(s => seatMap[s.number] = s);
+
                 for(let i=1; i<=10; i++) {
-                    let seatPrice = basePrice + (i <= 2 ? 50 : 0);
-                    let isPremium = i <= 2;
-                    const isSold = randomSold.includes(i);
-                    createSeat(container, `L${i}`, isSold, 'seat', `L${i}`, seatPrice, isPremium);
-                    createSeat(container, `M${i}`, randomSold.includes(i+100), 'seat', `M${i}`, seatPrice, isPremium);
-                    const gap = document.createElement('div'); container.appendChild(gap);
-                    createSeat(container, `A${i}`, randomSold.includes(i+200), 'seat', `A${i}`, seatPrice, isPremium);
-                    createSeat(container, `R${i}`, randomSold.includes(i+300), 'seat', `R${i}`, seatPrice, isPremium);
+                    // Seater Layout: L, M, A, R
+                    ['L', 'M', 'A', 'R'].forEach(pos => {
+                        let key = pos + i;
+                        // Fallback for data mismatch
+                        let data = seatMap[key] || {status: 'available', price: basePrice}; 
+                        let isSold = (data.status === 'sold');
+                        let isPremium = (i <= 2); // First 2 rows premium logic
+                        
+                        createSeat(container, key, isSold, 'seat', key, data.price, isPremium);
+                        
+                        if(pos === 'M') {
+                            const gap = document.createElement('div'); container.appendChild(gap);
+                        }
+                    });
                 }
             }
         }
@@ -559,7 +602,7 @@
 
             if(isSold) {
                 div.classList.add('sold');
-                div.onclick = null; // Nullify click
+                div.onclick = null; 
             } else {
                 div.onclick = function() { selectSeat(div, id); };
             }
@@ -695,7 +738,6 @@
         // --- 5. PAYMENT REDIRECT ---
         function goToPayment() {
             try {
-                // 1. Get Values
                 const totalElement = document.getElementById('totalPrice');
                 if (!totalElement) {
                     alert("Error: Could not find total price element.");
@@ -709,15 +751,14 @@
                 const from = urlParams.get('from');
                 const to = urlParams.get('to');
                 const isSleeper = urlParams.get('isSleeper');
+                const bus_id = urlParams.get('bus_id');
+                const date = urlParams.get('date');
 
-                // 2. Check for errors
                 if (!total) return alert("Please select at least one seat.");
                 if (!seats) return alert("No seats selected.");
 
-                // 3. Construct URL
-                const targetUrl = `payment.html?amount=${total}&seats=${seats}&bus=${encodeURIComponent(busName)}&from=${from}&to=${to}&isSleeper=${isSleeper}`;
+                const targetUrl = `payment.php?bus_id=${bus_id}&date=${date}&amount=${total}&seats=${seats}&bus=${encodeURIComponent(busName)}&from=${from}&to=${to}&isSleeper=${isSleeper}`;
 
-                // 4. Redirect
                 window.location.href = targetUrl;
 
             } catch (error) {

@@ -2,11 +2,11 @@
 include 'includes/db.php';
 
 // Initialize array
-$busData = [];
+ $busData = [];
 
 // Check if search parameters exist
-$searchFrom = $_GET['from'] ?? '';
-$searchTo = $_GET['to'] ?? '';
+ $searchFrom = $_GET['from'] ?? '';
+ $searchTo = $_GET['to'] ?? '';
 
 if ($searchFrom && $searchTo) {
     // JOIN buses and routes tables
@@ -26,7 +26,7 @@ if ($searchFrom && $searchTo) {
     
     while ($row = $result->fetch_assoc()) {
         // Calculate a dummy price based on distance (since price isn't in your DB)
-        $price = $row['distance_km'] * 2; // e.g., 2 rupees per km
+        $price = $row['distance_km'] * 2; // e.g. 2 rupees per km
         
         // Map DB columns to your Frontend JS keys
         $busData[] = [
@@ -47,7 +47,6 @@ if ($searchFrom && $searchTo) {
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -176,7 +175,7 @@ if ($searchFrom && $searchTo) {
             display: flex; gap: 12px; flex-wrap: wrap;
         }
         .filter-btn {
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
             color: white; padding: 10px 24px; border-radius: 50px;
             font-weight: 600; cursor: pointer; transition: var(--transition);
         }
@@ -353,7 +352,7 @@ if ($searchFrom && $searchTo) {
     <div class="top-header">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
-                <a href="index.html" class="text-dark text-decoration-none d-flex align-items-center gap-2 fw-bold fs-5">
+                <a href="index.php" class="text-dark text-decoration-none d-flex align-items-center gap-2 fw-bold fs-5">
                     <i class="fas fa-arrow-left"></i> <span>Home</span>
                 </a>
                 <div class="text-end d-none d-sm-block">
@@ -601,6 +600,7 @@ if ($searchFrom && $searchTo) {
             renderList(currentList);
         }
 
+        // --- FIXED RENDER LIST FUNCTION ---
         function renderList(list) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
@@ -669,7 +669,8 @@ if ($searchFrom && $searchTo) {
                             ${priceHtml}
                             <div class="price-tag">₹${displayPrice}</div>
                         </div>
-                        <a href="#" class="btn-seat">View Seats <i class="fas fa-arrow-right ms-1 small"></i></a>
+                        <!-- FIXED: Removed stray '}' from replace function -->
+                        <a href="#" onclick="selectBus(${b.id}, '${b.name.replace(/'/g, "\\'")}', ${displayPrice}, '${b.sub.replace(/'/g, "\\'")}'); return false;" class="btn-seat">View Seats <i class="fas fa-arrow-right ms-1 small"></i></a>
                     </div>
                 `;
 
@@ -682,7 +683,7 @@ if ($searchFrom && $searchTo) {
                             vDisplayPrice = v.discount.type === 'percent' ? Math.round(v.price * (1 - (v.discount.val/100))) : v.price - v.discount.val;
                         }
                         html += `
-                            <div class="variant-row" onclick="selectBus('${v.name}', ${vDisplayPrice}, '${v.sub}')">
+                            <div class="variant-row" onclick="selectBus(${v.id}, '${v.name.replace(/'/g, "\\'")}', ${vDisplayPrice}, '${v.sub.replace(/'/g, "\\'")}');">
                                 <div class="variant-info">
                                     <div class="variant-type">${v.sub}</div>
                                     <div style="font-size:0.75rem; color:#94A3B8">${v.am.includes('ac') ? '<i class="fas fa-snowflake"></i>' : ''} ${v.am.includes('wifi') ? '<i class="fas fa-wifi"></i>' : ''}</div>
@@ -701,7 +702,7 @@ if ($searchFrom && $searchTo) {
                 card.onclick = (e) => {
                     // Only trigger main click if not on a variant row
                     if(!e.target.closest('.variant-section')) {
-                        selectBus(b.name, displayPrice, b.sub);
+                        selectBus(b.id, b.name, displayPrice, b.sub); // FIXED: Passed correct arguments
                     }
                 };
 
@@ -741,11 +742,14 @@ if ($searchFrom && $searchTo) {
             tipsList.innerHTML = tips.map(t => `<li>${t}</li>`).join('');
         }
 
-        function selectBus(name, price, sub) {
+        function selectBus(id, name, price, sub) {
             const from = document.getElementById('inputFrom').value;
             const to = document.getElementById('inputTo').value;
+            const date = document.getElementById('inputDate').value; // Get Travel Date
             const isSleeper = sub.toLowerCase().includes('sleeper');
-            window.location.href = `seats.html?name=${encodeURIComponent(name)}&price=${price}&isSleeper=${isSleeper}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            
+            // Updated URL to include bus_id and date
+            window.location.href = `seats.php?bus_id=${id}&date=${date}&name=${encodeURIComponent(name)}&price=${price}&isSleeper=${isSleeper}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
         }
     </script>
 </body>

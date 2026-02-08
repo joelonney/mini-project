@@ -355,6 +355,7 @@ include 'includes/db.php';
             line-height: 1; 
             background: linear-gradient(180deg, var(--text-dark) 0%, var(--text-muted) 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 

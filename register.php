@@ -452,7 +452,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </select>
                     </div>
                     <div class="separator-line"></div>
-                    <input type="tel" class="phone-number-input" placeholder="Phone Number" required>
+                    <input type="tel" name="phone" class="phone-number-input" placeholder="Phone Number" required>
                 </div>
 
                 <!-- Password Input -->
