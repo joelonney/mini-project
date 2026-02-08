@@ -627,6 +627,8 @@
             
             return false; // Prevent immediate submission
         }
+        console.log("Bus ID:", document.getElementById('inputBusId').value);
+        console.log("Date:", document.getElementById('inputDate').value);
     </script>
 </body>
 </html>

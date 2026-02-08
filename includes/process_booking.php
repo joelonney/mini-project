@@ -12,18 +12,17 @@ if (!isset($_SESSION['user_id'])) {
  $bus_id = intval($_POST['bus_id']);
  $travel_date = $_POST['travel_date'];
  $amount = $_POST['amount'];
- $seats_str = $_POST['seats']; // Comma separated string: "L1,L2"
+ $seats_str = $_POST['seats']; // e.g., "L1,L2"
  $from = $_POST['from'];
  $to = $_POST['to'];
 
 // Explode seats into array
  $seat_numbers = explode(',', $seats_str);
 
-// 3. Transaction Start (Critical to prevent double booking)
+// 3. Transaction Start
  $conn->begin_transaction();
 
 try {
-    // Loop through each seat to create Booking and Ticket
     foreach ($seat_numbers as $seat_number) {
         $seat_number = trim($seat_number);
 
@@ -35,20 +34,21 @@ try {
         $seat_row = $result->fetch_assoc();
 
         if (!$seat_row) {
-            throw new Exception("Seat $seat_number not found on this bus.");
+            // ERROR: Seat not found in Database
+            throw new Exception("Seat $seat_number not found on this bus. Did you create seats in the database?");
         }
         $seat_id = $seat_row['seat_id'];
 
         // B. Insert Booking
-        $stmt_book = $conn->prepare("INSERT INTO bookings (user_id, bus_id, seat_id, travel_date, status) VALUES (?, ?, ?, ?, 'BOOKED')");
+        // FIXED: Added 'booking_date' column with value CURDATE()
+        $stmt_book = $conn->prepare("INSERT INTO bookings (user_id, bus_id, seat_id, booking_date, travel_date, status) VALUES (?, ?, ?, CURDATE(), ?, 'BOOKED')");
         $stmt_book->bind_param("iiss", $user_id, $bus_id, $seat_id, $travel_date);
         $stmt_book->execute();
         
-        $booking_id = $conn->insert_id; // Get the ID we just created
+        $booking_id = $conn->insert_id; 
 
-        // C. Insert Payment (We'll assume the payment method from the form or generic)
-        // Note: You didn't pass payment method in the hidden inputs, defaulting to CARD
-        $payment_method = "CARD"; // You can enhance this to pass real method
+        // C. Insert Payment
+        $payment_method = "CARD"; 
         $stmt_pay = $conn->prepare("INSERT INTO payments (booking_id, amount, payment_method, payment_status) VALUES (?, ?, ?, 'SUCCESS')");
         $stmt_pay->bind_param("ids", $booking_id, $amount, $payment_method);
         $stmt_pay->execute();
@@ -63,17 +63,17 @@ try {
     // Commit Transaction
     $conn->commit();
 
-    // 4. Redirect to Ticket Page (We need to pick ONE booking ID to show)
-    // Since we selected multiple seats, we usually show the first one or a combined view.
-    // Let's get the last booking ID
+    // Redirect to Ticket
+    // Show the first ticket of the batch
     $last_booking_id = $conn->insert_id; 
-
-    header("Location: ../ticket.php?id=" . ($last_booking_id - count($seat_numbers) + 1)); // Show first ticket
+    header("Location: ../ticket.php?id=" . ($last_booking_id - count($seat_numbers) + 1)); 
     exit();
 
 } catch (Exception $e) {
     $conn->rollback();
+    // Show the exact error so you know what is wrong
     echo "Error processing booking: " . $e->getMessage();
-    // Ideally redirect back with an error message
+    // Optional: Redirect back with error
+    // header("Location: ../payment.php?error=" . urlencode($e->getMessage()));
 }
 ?>
