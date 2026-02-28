@@ -49,13 +49,23 @@ $buses = $conn->query("SELECT bus_id, bus_number FROM buses");
     <title>Lost & Found - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>body { background-color: #f8f9fa; }</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { background-color: #f8f9fa; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important; }
+        .table thead { background-color: #E53935; color: white; }
+        .btn-warning { background-color: #E53935 !important; border-color: #E53935 !important; color: white !important;}
+        .text-warning { color: #E53935 !important; }
+        .navbar-custom { background-color: #E53935; box-shadow: 0 4px 15px rgba(229, 57, 53, 0.2); }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark p-3">
+    <nav class="navbar navbar-dark navbar-custom p-3">
         <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.php">SmartBus Admin</a>
-            <a href="../includes/logout.php" class="btn btn-outline-light btn-sm">Logout</a>
+            <a class="navbar-brand fw-bold" href="dashboard.php">
+                <i class="fas fa-bus-alt me-2 text-white"></i>SmartBus Admin
+            </a>
+            <a href="../includes/logout.php" class="btn btn-outline-light btn-sm fw-bold rounded-pill px-3">Logout</a>
         </div>
     </nav>
 

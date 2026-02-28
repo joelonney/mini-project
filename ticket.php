@@ -23,13 +23,15 @@ $sql = "SELECT
             bus.bus_number, bus.bus_type, bus.departure_time,
             r.source, r.destination,
             s.seat_number,
-            t.qr_code_data
+            t.qr_code_data,
+            p.amount as ticket_price
         FROM bookings b
         JOIN users u ON b.user_id = u.user_id
         JOIN buses bus ON b.bus_id = bus.bus_id
         JOIN routes r ON bus.route_id = r.route_id
         JOIN seats s ON b.seat_id = s.seat_id
         LEFT JOIN tickets t ON b.booking_id = t.booking_id
+        LEFT JOIN payments p ON b.booking_id = p.booking_id
         WHERE b.booking_id = ? AND b.user_id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -201,17 +203,26 @@ $ticket = $result->fetch_assoc();
     </div>
 
     <script type="text/javascript">
-        // Generate QR Code
-        // Data format: PNR|BusID|Seat|Date
-        const qrData = "PNR:<?php echo $ticket['booking_id']; ?>|BUS:<?php echo $ticket['bus_number']; ?>|SEAT:<?php echo $ticket['seat_number']; ?>";
+        // Generate QR Code containing readable passenger details for scanners
+        const qrData = `SmartBus E-Ticket
+--------------------
+Name: <?php echo addslashes($ticket['passenger_name']); ?>
+Route: <?php echo addslashes($ticket['source'] . ' to ' . $ticket['destination']); ?>
+Date: <?php echo $ticket['travel_date']; ?>
+Time: <?php echo $ticket['departure_time']; ?>
+Seat: <?php echo $ticket['seat_number']; ?>
+Price: Rs.<?php echo isset($ticket['ticket_price']) ? $ticket['ticket_price'] : 'N/A'; ?>
+ 
+--------------------
+PNR: <?php echo str_pad($ticket['booking_id'], 8, '0', STR_PAD_LEFT); ?>`;
         
         new QRCode(document.getElementById("qrcode"), {
             text: qrData,
-            width: 100,
-            height: 100,
+            width: 140,
+            height: 140,
             colorDark : "#000000",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
+            correctLevel : QRCode.CorrectLevel.L
         });
     </script>
 </body>

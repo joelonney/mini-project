@@ -193,7 +193,7 @@ function renderBookings($list, $type) {
 
                     <div class="d-flex gap-2 mt-3">
                         <?php if ($type != 'cancelled'): ?>
-                            <a href="ticket.php?booking_id=<?php echo $row['booking_id']; ?>" class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <a href="ticket.php?id=<?php echo $row['booking_id']; ?>" class="btn btn-outline-primary btn-sm flex-grow-1">
                                 <i class="fas fa-qrcode me-1"></i> Ticket
                             </a>
                         <?php endif; ?>

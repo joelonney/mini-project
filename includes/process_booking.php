@@ -46,6 +46,11 @@ try {
         $stmt_book->execute();
         
         $booking_id = $conn->insert_id; 
+        
+        // Capture the first booking ID for redirection
+        if (!isset($first_booking_id)) {
+            $first_booking_id = $booking_id;
+        } 
 
         // C. Insert Payment
         $payment_method = "CARD"; 
@@ -65,8 +70,11 @@ try {
 
     // Redirect to Ticket
     // Show the first ticket of the batch
-    $last_booking_id = $conn->insert_id; 
-    header("Location: ../ticket.php?id=" . ($last_booking_id - count($seat_numbers) + 1)); 
+    if (isset($first_booking_id)) {
+        header("Location: ../ticket.php?id=" . $first_booking_id);
+    } else {
+        header("Location: ../my_bookings.php"); // Fallback
+    }
     exit();
 
 } catch (Exception $e) {

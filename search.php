@@ -30,7 +30,7 @@ if ($searchFrom && $searchTo) {
     // JOIN buses and routes tables
     // Use prepared statements for security
     // Removed b.price as it doesn't exist in the table
-    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.departure_time, b.arrival_time,
+    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.base_price, b.departure_time, b.arrival_time,
                    r.source, r.destination, r.distance_km
             FROM buses b
             JOIN routes r ON b.route_id = r.route_id
@@ -43,7 +43,7 @@ if ($searchFrom && $searchTo) {
     $safeFrom = $conn->real_escape_string($searchFrom);
     $safeTo = $conn->real_escape_string($searchTo);
     
-    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.departure_time, b.arrival_time,
+    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.base_price, b.departure_time, b.arrival_time,
                    r.source, r.destination, r.distance_km
             FROM buses b
             JOIN routes r ON b.route_id = r.route_id
@@ -68,8 +68,8 @@ if ($searchFrom && $searchTo) {
     $operators = ['KSRTC Airavat', 'VRL Travels', 'SRS Travels', 'Orange Tours', 'GreenLine', 'Jabbar Travels', 'IntrCity SmartBus'];
     
     while ($row = $result->fetch_assoc()) {
-        // Calculate a dummy price based on distance
-        $price = $row['distance_km'] * 2; 
+        // Use base_price if available, otherwise fallback to distance-based dummy price
+        $price = (!empty($row['base_price']) && $row['base_price'] > 0) ? $row['base_price'] : ($row['distance_km'] * 2); 
         
         // Generate consistent mock data based on ID
         $opIndex = $row['bus_id'] % count($operators);

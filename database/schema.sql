@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS buses (
     bus_number VARCHAR(50) UNIQUE,
     bus_type ENUM('AC','NON-AC','SLEEPER'),
     total_seats INT NOT NULL,
+    base_price DECIMAL(10,2) DEFAULT 0.00,
     departure_time TIME,
     arrival_time TIME,
     FOREIGN KEY (route_id) REFERENCES routes(route_id) ON DELETE CASCADE
