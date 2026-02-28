@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_bus'])) {
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $conn->query("DELETE FROM buses WHERE bus_id=$id");
-    header("Location: manage_bus.php"); // Refresh page to show updated list
+    header("Location: manage_buses.php"); // Refresh page to show updated list
     exit();
 }
 
@@ -95,7 +95,7 @@ $buses = $conn->query("
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white fw-bold">Add New Bus</div>
                     <div class="card-body">
-                        <form method="POST" action="manage_bus.php">
+                        <form method="POST" action="manage_buses.php">
                             <div class="mb-3">
                                 <label class="form-label small text-muted">Bus Number</label>
                                 <input type="text" name="bus_number" class="form-control" placeholder="e.g. KL-01-AX-9999" required>
@@ -177,7 +177,7 @@ $buses = $conn->query("
                                                 <small><?php echo substr($row['departure_time'], 0, 5); ?> - <?php echo substr($row['arrival_time'], 0, 5); ?></small>
                                             </td>
                                             <td>
-                                                <a href="manage_bus.php?delete=<?php echo $row['bus_id']; ?>" 
+                                                <a href="manage_buses.php?delete=<?php echo $row['bus_id']; ?>" 
                                                    class="btn btn-outline-danger btn-sm" 
                                                    onclick="return confirm('Delete this bus and all associated seat records?');">
                                                    <i class="fas fa-trash-alt"></i>

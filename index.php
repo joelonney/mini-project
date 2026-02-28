@@ -1,6 +1,24 @@
 <?php 
 // 1. Include the database connection and start session
 include 'includes/db.php'; 
+
+// Fetch distinct cities for dropdowns
+$sources = [];
+$destinations = [];
+
+$sourceResult = $conn->query("SELECT DISTINCT source FROM routes ORDER BY source ASC");
+if ($sourceResult) {
+    while ($row = $sourceResult->fetch_assoc()) {
+        $sources[] = $row['source'];
+    }
+}
+
+$destResult = $conn->query("SELECT DISTINCT destination FROM routes ORDER BY destination ASC");
+if ($destResult) {
+    while ($row = $destResult->fetch_assoc()) {
+        $destinations[] = $row['destination'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -409,14 +427,22 @@ include 'includes/db.php';
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
-                    <?php if(isset($_SESSION['user_name'])): ?>
-                        <span class="me-2 fw-bold">Hi, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                        <a href="admin/dashboard.php" class="btn btn-nav">Dashboard</a>
+                <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
+                    <?php if(isset($_SESSION['user_id'])): ?>
+                        <span class="me-2 fw-bold text-muted">Hi, <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
+                        
+                        <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'ADMIN'): ?>
+                            <a href="admin/dashboard.php" class="btn btn-nav">Dashboard</a>
+                        <?php else: ?>
+                            <a href="my_bookings.php" class="btn btn-nav">My Bookings</a>
+                        <?php endif; ?>
+
                         <a href="includes/logout.php" class="btn btn-nav primary">Logout</a>
                     <?php else: ?>
                         <a href="login.php" class="btn btn-nav">Login</a>
                         <a href="register.php" class="btn btn-nav primary">Sign Up</a>
                     <?php endif; ?>
+                </div>
                 </div>
             </div>
         </div>
@@ -437,24 +463,33 @@ include 'includes/db.php';
                     </p>
 
                     <div class="search-container">
-                        <form id="homeSearchForm" onsubmit="handleHomeSearch(event)">
+                        <form id="homeSearchForm" action="search.php" method="GET">
                             <div class="row g-2">
                                 <div class="col-md-5">
                                     <div class="search-input-wrapper">
                                         <i class="fas fa-map-marker-alt search-icon"></i>
-                                        <input type="text" id="homeFrom" class="form-control form-control-hero" placeholder="From (e.g. Kochi)" required>
+                                        <select name="from" id="homeFrom" class="form-control form-control-hero ps-5" required>
+                                            <option value="" disabled selected>From (e.g. Bangalore)</option>
+                                            <?php foreach ($sources as $source): ?>
+                                                <option value="<?php echo htmlspecialchars($source); ?>"><?php echo htmlspecialchars($source); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-md-5">
                                     <div class="search-input-wrapper">
                                         <i class="fas fa-location-arrow search-icon"></i>
-                                        <input type="text" id="homeTo" class="form-control form-control-hero" placeholder="To (e.g. Bangalore)" required>
+                                        <select name="to" id="homeTo" class="form-control form-control-hero ps-5" required>
+                                            <option value="" disabled selected>To (e.g. Chennai)</option>
+                                            <?php foreach ($destinations as $dest): ?>
+                                                <option value="<?php echo htmlspecialchars($dest); ?>"><?php echo htmlspecialchars($dest); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
-                                    <button type="submit" id="searchBtn" class="btn-hero-search">
+                                    <button type="submit" id="searchBtn" class="btn-hero-search w-100">
                                         <span class="btn-text">Search</span>
-                                        <i class="fas fa-circle-notch loader-icon"></i>
                                     </button>
                                 </div>
                             </div>

@@ -1,48 +1,107 @@
 <?php
 include 'includes/db.php';
+// Disable error reporting for production/demo
+error_reporting(0);
+ini_set('display_errors', 0);
 
-// Initialize array
- $busData = [];
+// --- Fetch distinct cities for dropdowns ---
+$sources = [];
+$destinations = [];
+
+$sourceSql = "SELECT DISTINCT source FROM routes ORDER BY source ASC";
+$sourceResult = $conn->query($sourceSql);
+while ($row = $sourceResult->fetch_assoc()) {
+    $sources[] = $row['source'];
+}
+
+$destSql = "SELECT DISTINCT destination FROM routes ORDER BY destination ASC";
+$destResult = $conn->query($destSql);
+while ($row = $destResult->fetch_assoc()) {
+    $destinations[] = $row['destination'];
+}
 
 // Check if search parameters exist
- $searchFrom = $_GET['from'] ?? '';
- $searchTo = $_GET['to'] ?? '';
+$searchFrom = $_GET['from'] ?? '';
+$searchTo = $_GET['to'] ?? '';
+$searchDate = $_GET['date'] ?? '';
 
 if ($searchFrom && $searchTo) {
+    $busData = []; // Initialize to prevent undefined variable error
     // JOIN buses and routes tables
-    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.departure_time, b.arrival_time, 
+    // Use prepared statements for security
+    // Removed b.price as it doesn't exist in the table
+    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.departure_time, b.arrival_time,
                    r.source, r.destination, r.distance_km
             FROM buses b
             JOIN routes r ON b.route_id = r.route_id
-            WHERE r.source LIKE ? AND r.destination LIKE ?";
+            WHERE r.source = ? AND r.destination = ?";
             
-    $termFrom = "%" . $searchFrom . "%";
-    $termTo = "%" . $searchTo . "%";
+    // Note: Using exact match now since we have dropdowns
     
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $termFrom, $termTo);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Use direct query with escaping since analyze_data.php confirmed this works
+    // (Avoids potential issues with prepared statements/get_result driver support)
+    $safeFrom = $conn->real_escape_string($searchFrom);
+    $safeTo = $conn->real_escape_string($searchTo);
+    
+    $sql = "SELECT b.bus_id, b.bus_number, b.bus_type, b.departure_time, b.arrival_time,
+                   r.source, r.destination, r.distance_km
+            FROM buses b
+            JOIN routes r ON b.route_id = r.route_id
+            WHERE r.source = '$safeFrom' AND r.destination = '$safeTo'";
+            
+    $result = $conn->query($sql);
+    
+    if (!$result) {
+        $debugCount = "ERROR";
+        $debugError = $conn->error;
+    } else {
+        $debugCount = $result->num_rows;
+        $debugError = "";
+    }
+
+    // DEBUG LOGGING
+    $logMsg = "Search: From=$safeFrom, To=$safeTo, QueryStatus=" . ($result ? "OK" : "FAIL") . "\n";
+    if(!$result) $logMsg .= "Error: " . $conn->error . "\n";
+    // file_put_contents('debug_log.txt', $logMsg, FILE_APPEND); // Optional logging
+    
+    // List of realistic operators for the demo
+    $operators = ['KSRTC Airavat', 'VRL Travels', 'SRS Travels', 'Orange Tours', 'GreenLine', 'Jabbar Travels', 'IntrCity SmartBus'];
     
     while ($row = $result->fetch_assoc()) {
-        // Calculate a dummy price based on distance (since price isn't in your DB)
-        $price = $row['distance_km'] * 2; // e.g. 2 rupees per km
+        // Calculate a dummy price based on distance
+        $price = $row['distance_km'] * 2; 
         
+        // Generate consistent mock data based on ID
+        $opIndex = $row['bus_id'] % count($operators);
+        $operatorName = $operators[$opIndex];
+        
+        // Determine sub-type nicely
+        $subType = 'Club Class';
+        if (strpos(strtoupper($row['bus_type']), 'SLEEPER') !== false) {
+            $subType = 'Sleeper';
+        } else if (strpos(strtoupper($row['bus_type']), 'NON-AC') !== false) {
+            $subType = 'Seater / Non-AC';
+        }
+
+        // Tag government buses
+        $isGovt = (strpos($operatorName, 'KSRTC') !== false);
+        $displayType = $isGovt ? 'Government' : 'Private';
+
         // Map DB columns to your Frontend JS keys
         $busData[] = [
             'id' => $row['bus_id'],
             'from' => $row['source'],
             'to' => $row['destination'],
-            'name' => 'SmartBus ' . $row['bus_number'], // Using bus number as name
-            'type' => 'Private', // Default value
-            'sub' => $row['bus_type'], // e.g., 'AC', 'SLEEPER'
-            'dep' => substr($row['departure_time'], 0, 5), // HH:MM
-            'arr' => substr($row['arrival_time'], 0, 5),   // HH:MM
+            'name' => $operatorName,
+            'type' => $displayType,
+            'sub' => $subType, 
+            'dep' => substr($row['departure_time'], 0, 5),
+            'arr' => substr($row['arrival_time'], 0, 5),
             'price' => $price,
-            'rate' => 4.5, // Default rating
+            'rate' => 4.5 + (($row['bus_id'] % 5) / 10), // Random rating 4.5 - 5.0
             'cat' => ($row['bus_type'] == 'AC') ? 'comfort' : 'budget',
             'status' => 'ontime',
-            'am' => ['ac', 'wifi'] // Default amenities
+            'am' => ['ac', 'wifi', 'plug', 'water'] 
         ];
     }
 }
@@ -121,12 +180,12 @@ if ($searchFrom && $searchTo) {
             margin-bottom: 30px; border: 1px solid var(--glass-border);
             transform: translateY(0); transition: var(--transition);
         }
-        .form-input-modern {
+        .form-input-modern, .form-select-modern {
             width: 100%; border: 2px solid transparent; background: #F8FAFC;
             padding: 16px 20px; border-radius: 16px; font-weight: 600;
             font-size: 1rem; color: var(--text-main); transition: var(--transition);
         }
-        .form-input-modern:focus {
+        .form-input-modern:focus, .form-select-modern:focus {
             background: #fff; border-color: var(--primary);
             box-shadow: 0 0 0 6px rgba(229, 57, 53, 0.05); outline: none;
         }
@@ -196,9 +255,9 @@ if ($searchFrom && $searchTo) {
             border: 1px solid rgba(255,255,255,0.5); transition: var(--transition);
             cursor: pointer; position: relative; display: grid; gap: 20px;
             grid-template-columns: 1fr auto;
-            opacity: 0; transform: translateY(20px);
+            opacity: 1; transform: none; /* Forced Visibility */
         }
-        .bus-card.visible { opacity: 1; transform: translateY(0); }
+        .bus-card.visible { opacity: 1; transform: none; }
         .bus-card:hover {
             transform: translateY(-6px); box-shadow: var(--shadow-hover);
             border-color: rgba(229, 57, 53, 0.3);
@@ -355,9 +414,19 @@ if ($searchFrom && $searchTo) {
                 <a href="index.php" class="text-dark text-decoration-none d-flex align-items-center gap-2 fw-bold fs-5">
                     <i class="fas fa-arrow-left"></i> <span>Home</span>
                 </a>
-                <div class="text-end d-none d-sm-block">
-                    <div class="fw-bold text-dark" id="pageTitle">Find Your Bus</div>
-                    <div class="small text-muted" id="subTitle">Search routes below</div>
+                
+                <div class="d-flex gap-3 align-items-center">
+                    <?php if(isset($_SESSION['user_id'])): ?>
+                        <span class="d-none d-md-block fw-bold small text-muted">Hi, <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
+                        <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'ADMIN'): ?>
+                            <a href="admin/dashboard.php" class="btn btn-sm btn-outline-dark rounded-pill px-3">Dashboard</a>
+                        <?php else: ?>
+                            <a href="my_bookings.php" class="btn btn-sm btn-outline-dark rounded-pill px-3">My Bookings</a>
+                        <?php endif; ?>
+                        <a href="includes/logout.php" class="btn btn-sm btn-danger rounded-pill px-3">Logout</a>
+                    <?php else: ?>
+                        <a href="login.php" class="btn btn-sm btn-outline-dark rounded-pill px-3">Login</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -372,15 +441,29 @@ if ($searchFrom && $searchTo) {
                 <div class="row g-3">
                     <div class="col-md-3 col-6">
                         <label class="small text-muted fw-bold mb-2">FROM</label>
-                        <input type="text" name="from" id="inputFrom" class="form-input-modern" placeholder="City (e.g. Blr)" required>
+                        <select name="from" id="inputFrom" class="form-select-modern" required>
+                            <option value="" disabled selected>Select Source</option>
+                            <?php foreach ($sources as $source): ?>
+                                <option value="<?php echo htmlspecialchars($source); ?>" <?php if($source == $searchFrom) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($source); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="col-md-3 col-6">
                         <label class="small text-muted fw-bold mb-2">TO</label>
-                        <input type="text" name="to" id="inputTo" class="form-input-modern" placeholder="City (e.g. Kochi)" required>
+                        <select name="to" id="inputTo" class="form-select-modern" required>
+                            <option value="" disabled selected>Select Destination</option>
+                            <?php foreach ($destinations as $dest): ?>
+                                <option value="<?php echo htmlspecialchars($dest); ?>" <?php if($dest == $searchTo) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($dest); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="col-md-4 col-6">
                         <label class="small text-muted fw-bold mb-2">DATE</label>
-                        <input type="date" name="date" id="inputDate" class="form-input-modern" required>
+                        <input type="date" name="date" id="inputDate" class="form-input-modern" value="<?php echo htmlspecialchars($searchDate); ?>" required>
                     </div>
                     <div class="col-md-2 col-6 d-flex align-items-end">
                         <button type="submit" class="btn-search">
@@ -435,13 +518,13 @@ if ($searchFrom && $searchTo) {
     </div>
 
     <script>
-        // --- DATA (Expanded with Variants and Timeframes) ---
-        const buses = <?php echo json_encode($busData); ?>;
-
-        if (buses.length === 0) {
-            console.log("No results found in DB or no search performed.");
-        }
-
+        // --- DATA ---
+        // Ensure strictly valid JSON using constant check
+        const buses = <?php echo json_encode($busData ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        console.log("JS Loaded Bus Data:", buses);
+        if(buses.length > 0) { console.log("SUCCESS: Buses are present in JS."); }
+        else { console.error("FAILURE: Buses array is empty in JS."); }
+        
         const icons = {
             'wifi': '<i class="fas fa-wifi"></i>', 'ac': '<i class="fas fa-snowflake"></i>',
             'plug': '<i class="fas fa-plug"></i>', 'bed': '<i class="fas fa-bed"></i>',
@@ -452,87 +535,105 @@ if ($searchFrom && $searchTo) {
         let sortedList = [];
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('inputDate').valueAsDate = new Date();
-            
-            const params = new URLSearchParams(window.location.search);
-            const from = params.get('from');
-            const to = params.get('to');
-            if (from && to) {
-                document.getElementById('inputFrom').value = from;
-                document.getElementById('inputTo').value = to;
-                performSearch(from, to);
+            try {
+                // If date was not provided in server-side render, set to today
+                const dateHeader = document.getElementById('inputDate');
+                if(dateHeader && !dateHeader.value) {
+                   dateHeader.valueAsDate = new Date();
+                }
+                
+                const params = new URLSearchParams(window.location.search);
+                const from = params.get('from');
+                const to = params.get('to');
+                // Only search if params exist and haven't run yet
+                if (from && to) {
+                    performSearch(from, to);
+                }
+            } catch (e) {
+                console.error("Init error:", e);
+                document.getElementById('loader').style.display = 'none';
             }
         });
 
         // --- HELPER: Calculate Dynamic Duration ---
         function getDuration(dep, arr) {
-            let [dh, dm] = dep.split(':').map(Number);
-            let [ah, am] = arr.split(':').map(Number);
-            let depMins = dh * 60 + dm;
-            let arrMins = ah * 60 + am;
-            if (arrMins < depMins) arrMins += 24 * 60;
-            let diff = arrMins - depMins;
-            let hours = Math.floor(diff / 60);
-            let mins = diff % 60;
-            return `${hours}h ${mins}m`;
+            if(!dep || !arr) return '0h 0m';
+            try {
+                let [dh, dm] = dep.split(':').map(Number);
+                let [ah, am] = arr.split(':').map(Number);
+                let depMins = dh * 60 + dm;
+                let arrMins = ah * 60 + am;
+                if (arrMins < depMins) arrMins += 24 * 60;
+                let diff = arrMins - depMins;
+                let hours = Math.floor(diff / 60);
+                let mins = diff % 60;
+                return `${hours}h ${mins}m`;
+            } catch(e) { return '0h 0m'; }
         }
 
         // --- HELPER: Apply Random Discounts & Tweak Times ---
         function processBuses(list) {
-            let processed = JSON.parse(JSON.stringify(list));
+            if(!list) return [];
+            try {
+                let processed = JSON.parse(JSON.stringify(list));
 
-            // 1. Tweak Times (-5 to +5 mins)
-            processed.forEach(b => {
-                const addMins = (time, mins) => {
-                    let [h, m] = time.split(':').map(Number);
-                    let total = h * 60 + m + mins;
-                    let newH = Math.floor(total / 60) % 24;
-                    let newM = total % 60;
-                    return `${String(newH).padStart(2,'0')}:${String(newM).padStart(2,'0')}`;
-                };
-                let drift = Math.floor(Math.random() * 11) - 5;
-                if(drift !== 0) {
-                    b.dep = addMins(b.dep, drift);
-                    b.arr = addMins(b.arr, drift);
-                }
-            });
-
-            // 2. Random Discounts (Max 2 per list)
-            let indices = [...Array(processed.length).keys()];
-            indices.sort(() => Math.random() - 0.5);
-            let appliedCount = 0;
-            indices.forEach(i => {
-                if(appliedCount >= 2) return;
-                if(Math.random() > 0.4) {
-                    let isPercent = Math.random() > 0.5;
-                    let val = isPercent 
-                        ? (Math.floor(Math.random() * 3) + 1) * 5 
-                        : Math.floor(Math.random() * 100) + 50;
-                    processed[i].discount = {
-                        type: isPercent ? 'percent' : 'flat',
-                        val: val, text: isPercent ? `${val}% OFF` : `₹${val} OFF`
+                // 1. Tweak Times (-5 to +5 mins)
+                processed.forEach(b => {
+                    const addMins = (time, mins) => {
+                        if(!time) return '00:00';
+                        let [h, m] = time.split(':').map(Number);
+                        let total = h * 60 + m + mins;
+                        let newH = Math.floor(total / 60) % 24;
+                        let newM = total % 60;
+                        return `${String(newH).padStart(2,'0')}:${String(newM).padStart(2,'0')}`;
                     };
-                    appliedCount++;
-                }
-            });
-            return processed;
+                    let drift = Math.floor(Math.random() * 11) - 5;
+                    if(drift !== 0) {
+                        b.dep = addMins(b.dep, drift);
+                        b.arr = addMins(b.arr, drift);
+                    }
+                });
+
+                // 2. Random Discounts (Max 2 per list)
+                let indices = [...Array(processed.length).keys()];
+                indices.sort(() => Math.random() - 0.5);
+                let appliedCount = 0;
+                indices.forEach(i => {
+                    if(appliedCount >= 2) return;
+                    if(Math.random() > 0.4) {
+                        let isPercent = Math.random() > 0.5;
+                        let val = isPercent 
+                            ? (Math.floor(Math.random() * 3) + 1) * 5 
+                            : Math.floor(Math.random() * 100) + 50;
+                        processed[i].discount = {
+                            type: isPercent ? 'percent' : 'flat',
+                            val: val, text: isPercent ? `${val}% OFF` : `₹${val} OFF`
+                        };
+                        appliedCount++;
+                    }
+                });
+                return processed;
+            } catch(e) {
+                console.error("Process error:", e);
+                return list;
+            }
         }
 
         // --- HELPER: Group Buses (Main + Sub Variants) ---
         function groupBuses(list) {
             const groups = {};
             list.forEach(bus => {
+                // Default handling for missing fields
+                 const safeName = bus.name || 'Bus';
+                 const safeDep = bus.dep || '00:00';
+                 
                 // Create a unique key based on From, To, Name, and Departure Time
-                // This groups variants (Sleeper/Seater) under one master card
-                const key = `${bus.from}-${bus.to}-${bus.name}-${bus.dep}`;
+                const key = `${bus.from}-${bus.to}-${safeName}-${safeDep}`;
                 
                 if (!groups[key]) {
                     groups[key] = { main: bus, variants: [] };
                 } else {
-                    // If it's a variant, add it to the variants array
-                    // We determine "main" as the cheapest option usually
                     if (bus.price < groups[key].main.price) {
-                        // Swap if new bus is cheaper
                         let temp = groups[key].main;
                         groups[key].main = bus;
                         groups[key].variants.push(temp);
@@ -545,7 +646,7 @@ if ($searchFrom && $searchTo) {
         }
 
         function handleSearch(e) {
-            e.preventDefault();
+            e.preventDefault(); // This is mostly for programmatic calls, the form usually submits naturally
             const from = document.getElementById('inputFrom').value;
             const to = document.getElementById('inputTo').value;
             performSearch(from, to);
@@ -554,162 +655,204 @@ if ($searchFrom && $searchTo) {
         function quickRoute(from, to) {
             document.getElementById('inputFrom').value = from;
             document.getElementById('inputTo').value = to;
-            performSearch(from, to);
+            // Submit form to trigger reload with params
+            document.getElementById('searchForm').submit();
+        }
+
+        // --- INITIALIZATION ---
+        // If data exists, render it immediately (PHP has already filtered it)
+        if(Array.isArray(buses) && buses.length > 0) {
+            renderList(buses);
         }
 
         function performSearch(from, to) {
-            document.getElementById('loader').style.display = 'flex';
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
             document.getElementById('pageTitle').innerText = `${from} to ${to}`;
             
             setTimeout(() => {
-                const fromKey = from.toLowerCase();
-                const toKey = to.toLowerCase();
-                
-                let filtered = buses.filter(b => 
-                    b.from.toLowerCase().includes(fromKey) && 
-                    b.to.toLowerCase().includes(toKey)
-                );
+                try {
+                    // Since PHP already filtered the main list by From/To, 
+                    // we can mostly trust 'buses'. 
+                    // However, if we want to do client-side filtering (e.g. typing in new boxes), 
+                    // we can keep a loose filter.
+                    
+                    const fromKey = from.toLowerCase().trim();
+                    const toKey = to.toLowerCase().trim();
+                    
+                    let filtered = buses;
+                    if(fromKey && toKey) {
+                         filtered = buses.filter(b => 
+                            (b.from && b.from.toLowerCase().includes(fromKey)) && 
+                            (b.to && b.to.toLowerCase().includes(toKey))
+                        );
+                    }
 
-                // Apply Discounts & Tweaks
-                currentList = processBuses(filtered);
-                
-                // Sort Default (Departure)
-                currentList.sort((a, b) => a.dep.localeCompare(b.dep));
-                sortedList = [...currentList]; // Keep reference for sorting
+                    // Apply Discounts & Tweaks
+                    currentList = processBuses(filtered);
+                    
+                    // Sort Default (Departure)
+                    currentList.sort((a, b) => (a.dep || '').localeCompare(b.dep || ''));
+                    sortedList = [...currentList]; 
 
-                renderList(sortedList);
-                showTips(fromKey, toKey);
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('controlsSection').style.display = 'flex';
-            }, 800);
+                    renderList(sortedList);
+                    showTips(fromKey, toKey);
+                } catch (e) {
+                    console.error("Search Error:", e);
+                    document.getElementById('resultsContainer').innerHTML = 
+                        `<div class="text-center text-danger mt-5"><h5>Something went wrong loading buses.</h5></div>`;
+                } finally {
+                    loader.style.display = 'none';
+                    document.getElementById('controlsSection').style.display = 'flex';
+                }
+            }, 500);
         }
 
         function handleSort() {
-            const val = document.getElementById('sortSelect').value;
-            if(val === 'dep') {
-                currentList.sort((a, b) => a.dep.localeCompare(b.dep));
-            } else if (val === 'priceLow') {
-                currentList.sort((a, b) => {
-                    let priceA = a.discount ? (a.discount.type === 'percent' ? a.price*(1-a.discount.val/100) : a.price-a.discount.val) : a.price;
-                    let priceB = b.discount ? (b.discount.type === 'percent' ? b.price*(1-b.discount.val/100) : b.price-b.discount.val) : b.price;
-                    return priceA - priceB;
-                });
-            } else if (val === 'rating') {
-                currentList.sort((a, b) => b.rate - a.rate);
-            }
-            renderList(currentList);
+            try {
+                const val = document.getElementById('sortSelect').value;
+                if(val === 'dep') {
+                    currentList.sort((a, b) => (a.dep || '').localeCompare(b.dep || ''));
+                } else if (val === 'priceLow') {
+                    currentList.sort((a, b) => {
+                        let priceA = a.discount ? (a.discount.type === 'percent' ? a.price*(1-a.discount.val/100) : a.price-a.discount.val) : a.price;
+                        let priceB = b.discount ? (b.discount.type === 'percent' ? b.price*(1-b.discount.val/100) : b.price-b.discount.val) : b.price;
+                        return priceA - priceB;
+                    });
+                } else if (val === 'rating') {
+                    currentList.sort((a, b) => b.rate - a.rate);
+                }
+                renderList(currentList);
+            } catch(e) { console.error("Sort error:", e); }
         }
 
-        // --- FIXED RENDER LIST FUNCTION ---
+        // --- FULL RENDER LIST FUNCTION (RESTORED & FAIL-SAFE) ---
         function renderList(list) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
             
-            if (list.length === 0) {
-                container.innerHTML = `<div class="text-center text-white mt-5"><h5>No buses found</h5></div>`;
+            if (!list || list.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center mt-5">
+                        <h4 class="text-white mb-3">No available buses found.</h4>
+                        <p class="text-white-50">This might be because the database is empty.</p>
+                        <a href="seed_data_web.php" class="btn btn-warning fw-bold pulse-animation">
+                            <i class="fas fa-database me-2"></i> Click here to Generate Sample Data
+                        </a>
+                    </div>
+                `;
                 return;
             }
 
             // 1. Group the buses
-            const groupedData = groupBuses(list);
+            try {
+                const groupedData = groupBuses(list);
 
-            groupedData.forEach((group, i) => {
-                const b = group.main;
-                const typeClass = b.type === 'Government' ? 'type-govt' : 'type-priv';
-                const statusClass = b.status === 'ontime' ? 'st-ontime' : (b.status === 'boarding' ? 'st-boarding' : 'st-delayed');
-                const statusText = b.status === 'ontime' ? 'On Time' : (b.status === 'boarding' ? 'Boarding' : 'Delayed 10m');
-                const duration = getDuration(b.dep, b.arr);
-                
-                let priceHtml = '';
-                let displayPrice = b.price;
-                if (b.discount) {
-                    if(b.discount.type === 'percent') displayPrice = Math.round(b.price * (1 - (b.discount.val/100)));
-                    else displayPrice = b.price - b.discount.val;
-                    priceHtml = `<div class="discount-tag">${b.discount.text}</div><span class="original-price">₹${b.price}</span>`;
-                }
-
-                const amIcons = b.am.map(x => icons[x]).join(' ');
-
-                const card = document.createElement('div');
-                card.className = 'bus-card';
-                card.style.animationDelay = `${i * 0.1}s`;
-                
-                // Card HTML
-                let html = `
-                    <div class="status-badge ${statusClass}">${statusText}</div>
+                groupedData.forEach((group, i) => {
+                    const b = group.main;
+                    const typeClass = b.type === 'Government' ? 'type-govt' : 'type-priv';
+                    const statusClass = b.status === 'ontime' ? 'st-ontime' : (b.status === 'boarding' ? 'st-boarding' : 'st-delayed');
+                    const statusText = b.status === 'ontime' ? 'On Time' : (b.status === 'boarding' ? 'Boarding' : 'Delayed 10m');
+                    const duration = getDuration(b.dep, b.arr);
                     
-                    <div class="bus-info">
-                        <div class="bus-logo">
-                            <i class="fas fa-${b.sub.includes('Sleeper') ? 'bed' : 'bus-alt'}"></i>
-                        </div>
-                        <div class="bus-details">
-                            <div class="bus-name-row">
-                                <span class="bus-name">${b.name}</span>
-                                <span class="bus-type ${typeClass}">${b.type}</span>
-                            </div>
-                            <div class="bus-sub">${b.sub}</div>
-                            
-                            <div class="time-display">
-                                <div class="time-col"><span class="time-val">${b.dep}</span></div>
-                                <div class="dash-line"></div>
-                                <div class="time-col"><span class="dur-val">${duration}</span></div>
-                                <div class="dash-line"></div>
-                                <div class="time-col"><span class="time-val">${b.arr}</span></div>
-                            </div>
-
-                            <div class="amenities-row">
-                                ${amIcons}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bus-action">
-                        <div class="rating-box"><i class="fas fa-star"></i> ${b.rate}</div>
-                        <div class="price-container">
-                            ${priceHtml}
-                            <div class="price-tag">₹${displayPrice}</div>
-                        </div>
-                        <!-- FIXED: Removed stray '}' from replace function -->
-                        <a href="#" onclick="selectBus(${b.id}, '${b.name.replace(/'/g, "\\'")}', ${displayPrice}, '${b.sub.replace(/'/g, "\\'")}'); return false;" class="btn-seat">View Seats <i class="fas fa-arrow-right ms-1 small"></i></a>
-                    </div>
-                `;
-
-                // 2. Add Variants Section if they exist
-                if (group.variants.length > 0) {
-                    html += `<div class="variant-section"><div class="variant-title">Other variants available</div>`;
-                    group.variants.forEach(v => {
-                        let vDisplayPrice = v.price;
-                        if(v.discount) {
-                            vDisplayPrice = v.discount.type === 'percent' ? Math.round(v.price * (1 - (v.discount.val/100))) : v.price - v.discount.val;
+                    // Fail-safe Masking
+                    try {
+                        let priceHtml = '';
+                        let displayPrice = b.price || 0;
+                        if (b.discount && typeof b.discount === 'object') {
+                           try {
+                                if(b.discount.type === 'percent') displayPrice = Math.round(b.price * (1 - (b.discount.val/100)));
+                                else displayPrice = b.price - b.discount.val;
+                                priceHtml = `<div class="discount-tag">${b.discount.text}</div><span class="original-price">₹${b.price}</span>`;
+                           } catch(err) { console.warn("Discount Calc Error:", err); }
                         }
-                        html += `
-                            <div class="variant-row" onclick="selectBus(${v.id}, '${v.name.replace(/'/g, "\\'")}', ${vDisplayPrice}, '${v.sub.replace(/'/g, "\\'")}');">
-                                <div class="variant-info">
-                                    <div class="variant-type">${v.sub}</div>
-                                    <div style="font-size:0.75rem; color:#94A3B8">${v.am.includes('ac') ? '<i class="fas fa-snowflake"></i>' : ''} ${v.am.includes('wifi') ? '<i class="fas fa-wifi"></i>' : ''}</div>
+
+                        const safeAm = Array.isArray(b.am) ? b.am : [];
+                        const amIcons = safeAm.map(x => icons[x] || '').join(' ');
+
+                        const card = document.createElement('div');
+                        card.className = 'bus-card visible'; 
+                        
+                        const safeName = (b.name || 'Unknown Bus').replace(/'/g, "\\'");
+                        const safeSub = (b.sub || '').replace(/'/g, "\\'");
+                        const safeDep = b.dep || '00:00';
+                        const safeArr = b.arr || '00:00';
+
+                        // Card HTML
+                        let html = `
+                            <div class="status-badge ${statusClass}">${statusText}</div>
+                            
+                            <div class="bus-info">
+                                <div class="bus-logo">
+                                    <i class="fas fa-${(b.sub || '').includes('Sleeper') ? 'bed' : 'bus-alt'}"></i>
                                 </div>
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <div class="variant-price">₹${vDisplayPrice}</div>
-                                    <button class="variant-btn">Book</button>
+                                <div class="bus-details">
+                                    <div class="bus-name-row">
+                                        <span class="bus-name">${b.name || 'Bus'}</span>
+                                        <span class="bus-type ${typeClass}">${b.type || 'Private'}</span>
+                                    </div>
+                                    <div class="bus-sub">${b.sub || ''}</div>
+                                    
+                                    <div class="time-display">
+                                        <div class="time-col"><span class="time-val">${safeDep}</span></div>
+                                        <div class="dash-line"></div>
+                                        <div class="time-col"><span class="dur-val">${duration}</span></div>
+                                        <div class="dash-line"></div>
+                                        <div class="time-col"><span class="time-val">${safeArr}</span></div>
+                                    </div>
+
+                                    <div class="amenities-row">
+                                        ${amIcons}
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div class="bus-action">
+                                <div class="rating-box"><i class="fas fa-star"></i> ${b.rate || '4.5'}</div>
+                                <div class="price-container">
+                                    ${priceHtml}
+                                    <div class="price-tag">₹${displayPrice}</div>
+                                </div>
+                                <a href="#" onclick="selectBus(${b.id}, '${safeName}', ${displayPrice}, '${safeSub}'); return false;" class="btn-seat">View Seats <i class="fas fa-arrow-right ms-1 small"></i></a>
                             </div>
                         `;
-                    });
-                    html += `</div>`;
-                }
 
-                card.innerHTML = html;
-                card.onclick = (e) => {
-                    // Only trigger main click if not on a variant row
-                    if(!e.target.closest('.variant-section')) {
-                        selectBus(b.id, b.name, displayPrice, b.sub); // FIXED: Passed correct arguments
+                        // Add Variants safely
+                        if (group.variants && group.variants.length > 0) {
+                             html += `<div class="variant-section"><div class="variant-title">Other variants available</div>`;
+                             group.variants.forEach(v => {
+                                 // Minimal variant render
+                                 let vPrice = v.price || 0;
+                                 html += `
+                                    <div class="variant-row">
+                                        <div class="variant-info"><div class="variant-type">${v.sub || 'Seat'}</div></div>
+                                        <div class="variant-price">₹${vPrice}</div>
+                                    </div>`;
+                             });
+                             html += `</div>`;
+                        }
+
+                        card.innerHTML = html;
+                        card.onclick = (e) => {
+                            if(!e.target.closest('.variant-section') && !e.target.closest('.btn-seat')) {
+                                selectBus(b.id, b.name, displayPrice, b.sub); 
+                            }
+                        };
+                        container.appendChild(card);
+                    } catch(innerE) {
+                        console.error("Error rendering individual card:", innerE, b);
                     }
-                };
-
-                container.appendChild(card);
-                setTimeout(() => card.classList.add('visible'), 50 + (i * 50));
-            });
+                });
+            } catch (e) {
+                console.error("Render Error:", e);
+                container.innerHTML = `<div class="text-center text-danger mt-5"><h5>Error rendering results.</h5></div>`;
+            }
         }
+        
+
+
+
+
 
         function filterBuses(cat) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));

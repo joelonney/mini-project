@@ -1,6 +1,17 @@
 <?php
 include 'includes/db.php';
 
+if (isset($_GET['social_login'])) {
+    // Mock Social Login
+    $provider = $_GET['social_login'];
+    $_SESSION['user_id'] = 999; // Demo ID
+    $_SESSION['user_name'] = "Demo User ($provider)";
+    $_SESSION['role'] = "USER";
+    $_SESSION['login_success'] = "Welcome! Logged in via $provider (Demo Mode).";
+    header("Location: index.php");
+    exit();
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
@@ -396,20 +407,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <!-- Social Login -->
             <div class="social-login">
-                <div class="social-btn" onclick="showToast('Google', 'Redirecting to Google...', 'success')">
+                <a href="login.php?social_login=Google" class="social-btn text-decoration-none">
                     <i class="fab fa-google"></i>
-                </div>
-                <div class="social-btn" onclick="showToast('Apple', 'Redirecting to Apple...', 'success')">
+                </a>
+                <a href="login.php?social_login=Apple" class="social-btn text-decoration-none">
                     <i class="fab fa-apple"></i>
-                </div>
-                <div class="social-btn" onclick="showToast('Facebook', 'Redirecting to Facebook...', 'success')">
+                </a>
+                <a href="login.php?social_login=Facebook" class="social-btn text-decoration-none">
                     <i class="fab fa-facebook-f"></i>
-                </div>
+                </a>
             </div>
 
             <!-- Register Link -->
             <div class="small-text">
-                New here? <a href="#">Create account</a>
+                New here? <a href="register.php">Create account</a>
             </div>
         </div>
     </div>

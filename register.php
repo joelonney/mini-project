@@ -490,7 +490,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </button>
 
             <div class="auth-links">
-                Already have an account? <a href="login.html">Login here</a>
+                Already have an account? <a href="login.php">Login here</a>
             </div>
         </div>
     </div>
@@ -500,30 +500,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     <script>
         // Simulating Form Submission
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('registerBtn');
-            const originalText = btn.querySelector('span').innerText;
+        // document.getElementById('registerForm').addEventListener('submit', function(e) {
+        //     e.preventDefault();
+        //     const btn = document.getElementById('registerBtn');
+        //     const originalText = btn.querySelector('span').innerText;
             
-            // Add Loading State
-            btn.classList.add('loading');
-            btn.querySelector('span').innerText = 'Creating Account...';
-            btn.style.pointerEvents = 'none'; // Prevent double click
+        //     // Add Loading State
+        //     btn.classList.add('loading');
+        //     btn.querySelector('span').innerText = 'Creating Account...';
+        //     btn.style.pointerEvents = 'none'; // Prevent double click
 
-            // Simulate API Call delay
-            setTimeout(() => {
-                // Reset button state (for demo purposes)
-                btn.classList.remove('loading');
-                btn.querySelector('span').innerText = 'Success!';
-                btn.style.backgroundColor = '#2e7d32'; // Green for success
-                btn.style.pointerEvents = 'all';
+        //     // Simulate API Call delay
+        //     setTimeout(() => {
+        //         // Reset button state (for demo purposes)
+        //         btn.classList.remove('loading');
+        //         btn.querySelector('span').innerText = 'Success!';
+        //         btn.style.backgroundColor = '#2e7d32'; // Green for success
+        //         btn.style.pointerEvents = 'all';
 
-                // Optional: Reset form
-                // this.reset(); 
+        //         // Optional: Reset form
+        //         // this.reset(); 
                 
-                console.log("Registration Complete");
-            }, 2000);
-        });
+        //         console.log("Registration Complete");
+        //     }, 2000);
+        // });
     </script>
 </body>
 </html>

@@ -86,3 +86,13 @@ CREATE TABLE IF NOT EXISTS tickets (
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
+
+-- 10. Lost and Found Table
+CREATE TABLE IF NOT EXISTS lost_and_found (
+    item_id INT AUTO_INCREMENT PRIMARY KEY,
+    description TEXT,
+    status ENUM('FOUND','CLAIMED') DEFAULT 'FOUND',
+    found_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    bus_id INT,
+    FOREIGN KEY (bus_id) REFERENCES buses(bus_id) ON DELETE CASCADE
+);

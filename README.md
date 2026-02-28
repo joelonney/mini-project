@@ -1,4 +1,18 @@
-🚌 SmartBus - Web-Based Bus Ticket Booking SystemSmartBus is a modern, web-based application designed to digitize the inter-city bus booking process. It allows passengers to search for buses, analyze seat sunlight exposure (Smart Seat Selection), and book tickets with QR code integration. It also features a robust Admin Dashboard for fleet and route management.🌟 Key Features👤 User Module (Passenger)Smart Search: Filter buses by Source, Destination, and Date.☀️ Sun Analysis Feature: Unique feature that calculates the sun's position for the journey time to recommend "Shaded" vs "Sunny" seats.Interactive Seat Layout: Visual seat selection for Sleeper and Seater buses.QR-Based E-Tickets: Generates a downloadable ticket with a QR code for easy check-in.Mobile-Responsive UI: Built with Bootstrap 5 for a seamless experience on phones and desktops.🛠 Admin ModuleDashboard: Quick overview of fleet status and booking stats.Fleet Management: Add, Edit, or Delete buses (AC, Non-AC, Sleeper).Route Management: Define sources, destinations, and distances.Booking Oversight: View all passenger reservations.💻 Technology StackFrontend: HTML5, CSS3, JavaScript (ES6+), Bootstrap 5, FontAwesome.Backend: PHP (Procedural).Database: MySQL.Server: Apache (via XAMPP/WAMP).Libraries:suncalc.js (For Sunlight Analysis).qrcode.js (For Ticket QR generation).📂 Project StructurePlaintext/smartbus
+🚌 SmartBus - Web-Based Bus Ticket Booking System
+
+## 🚀 Quick Start (Windows)
+1. **Database**: Create a database named `bus_booking_system` in phpMyAdmin.
+2. **Run**: Double-click `run_server.bat`.
+   - It will automatically populate the database.
+   - It will start the server and open the app in your browser.
+
+---
+
+SmartBus is a modern, web-based application designed to digitize the inter-city bus booking process. It allows passengers to search for buses, analyze seat sunlight exposure (Smart Seat Selection), and book tickets with QR code integration. It also features a robust Admin Dashboard for fleet and route management.
+
+🌟 Key Features
+👤 User Module (Passenger)
+Smart Search: Filter buses by Source, Destination, and Date.☀️ Sun Analysis Feature: Unique feature that calculates the sun's position for the journey time to recommend "Shaded" vs "Sunny" seats.Interactive Seat Layout: Visual seat selection for Sleeper and Seater buses.QR-Based E-Tickets: Generates a downloadable ticket with a QR code for easy check-in.Mobile-Responsive UI: Built with Bootstrap 5 for a seamless experience on phones and desktops.🛠 Admin ModuleDashboard: Quick overview of fleet status and booking stats.Fleet Management: Add, Edit, or Delete buses (AC, Non-AC, Sleeper).Route Management: Define sources, destinations, and distances.Booking Oversight: View all passenger reservations.💻 Technology StackFrontend: HTML5, CSS3, JavaScript (ES6+), Bootstrap 5, FontAwesome.Backend: PHP (Procedural).Database: MySQL.Server: Apache (via XAMPP/WAMP).Libraries:suncalc.js (For Sunlight Analysis).qrcode.js (For Ticket QR generation).📂 Project StructurePlaintext/smartbus
 │
 ├── /admin                # Admin Panel Files
 │   ├── dashboard.php     # Admin Home

@@ -273,30 +273,103 @@ while($row = $seatsRes->fetch_assoc()){
             color: #888;
             border: 2px solid transparent;
             width: 52px;
-            opacity: 0; 
+            opacity: 0;
+            /* For entrance animation */
             transform: translateY(15px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
-        .seat.animate-in { animation: seatPop 0.5s forwards; }
-        @keyframes seatPop { to { opacity: 1; transform: translateY(0); } }
+        .seat.animate-in {
+            animation: seatPop 0.5s forwards;
+        }
 
-        .seat.premium { 
-            border-color: var(--premium-border); 
+        @keyframes seatPop {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- IMPROVED SEAT VISUALS --- */
+        .seat::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 12px;
+            background: inherit;
+            border-radius: 6px 6px 0 0;
+            /* Headrest */
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: -1;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .seat.sleeper {
+            width: 100%;
+            height: 38px;
+            border-radius: 6px;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+        }
+
+        .seat.sleeper.upper {
+            margin-bottom: 8px;
+        }
+
+        .seat.sleeper::before {
+            /* PILLOW for sleeper */
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 5px;
+            /* Head at left */
+            transform: translateY(-50%);
+            width: 8px;
+            height: 70%;
+            background: #cbd3da;
+            border-radius: 4px;
+            border: none;
+            box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .seat.sleeper.upper::before {
+            left: auto;
+            right: 5px;
+            /* Head at right for upper? Just variation */
+        }
+
+        .seat.premium {
+            border-color: var(--premium-border);
             background: linear-gradient(145deg, #fff8e1, #ffecb3);
         }
-        .seat.premium:hover::before { display: block; }
-        .seat.premium:hover { transform: scale(1.1) translateY(-2px); }
 
-        .seat.sleeper { width: 100%; height: 38px; border-radius: 8px; }
-        .seat.sleeper.upper { height: 38px; margin-bottom: 5px; background-color: #dee2e6; }
+        /* Premium Headrest */
+        .seat.premium::before {
+            background: linear-gradient(145deg, #fff8e1, #ffecb3);
+            border-color: #ffd700;
+        }
+
+        .seat.premium::after {
+            /* Crown icon for premium */
+            content: '\f521';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: -14px;
+            right: -8px;
+            font-size: 0.6rem;
+            color: #f57c00;
+            transform: rotate(15deg);
+        }
 
         .seat:hover:not(.sold):not(.sun-hot):not(.sun-safe) {
             background: #e2e6ea;
             transform: scale(1.1);
             color: var(--text-dark);
-            z-index: 10;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 100 !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
         .seat.selected {
@@ -308,17 +381,29 @@ while($row = $seatsRes->fetch_assoc()){
             border-color: white;
         }
 
+        /* --- SOLD SEATS: TEXTURE --- */
         .seat.sold {
-            background: #000000; 
-            color: #444; 
+            background: repeating-linear-gradient(45deg,
+                    #2b2b2b,
+                    #2b2b2b 10px,
+                    #222 10px,
+                    #222 20px);
+            color: transparent;
             cursor: not-allowed;
-            pointer-events: none; 
-            border-color: #222;
-            box-shadow: none;
-            transform: none !important; 
+            pointer-events: none;
+            border: 1px solid #444;
+            opacity: 0.7;
         }
+
+        .seat.sold::before {
+            display: none;
+        }
+
+        /* No headrest for sold */
+        /* Add Lock Icon for sold seats */
         .seat.sold::after {
-            content: '\f023'; 
+            content: '\f023';
+            /* FontAwesome Lock */
             font-family: "Font Awesome 6 Free";
             font-weight: 900;
             position: absolute;
@@ -329,6 +414,7 @@ while($row = $seatsRes->fetch_assoc()){
             transform: translate(-50%, -50%);
         }
 
+        /* Amenity Icons */
         .amenity-icon {
             position: absolute;
             bottom: 3px;
@@ -338,36 +424,58 @@ while($row = $seatsRes->fetch_assoc()){
             pointer-events: none;
         }
 
+        /* --- SUN SAFE: BRIGHT GREEN GLOW --- */
         .seat.sun-safe {
-            background: #198754 !important; 
-            color: white !important;
-            border: 2px solid #00ff88; 
-            box-shadow: 0 0 25px rgba(0, 255, 136, 0.6), inset 0 0 10px rgba(255,255,255,0.2);
+            background: #2ecc71 !important;
+            /* Brighter, more vibrant green */
+            color: #fff !important;
+            border: 2px solid #27ae60;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.2);
             animation: pulse-green 2s infinite;
-            z-index: 5;
+            z-index: 50;
+            cursor: pointer !important;
+            /* Force clickable */
         }
+
         .seat.sun-safe::after {
-            content: 'Best';
+            content: 'Cool';
+            /* Changed from Best to Cool */
             position: absolute;
             top: -12px;
             left: 50%;
             transform: translateX(-50%);
-            background: #00ff88;
-            color: #004d1a;
-            font-size: 0.45rem;
+            background: #27ae60;
+            color: #fff;
+            font-size: 0.5rem;
             font-weight: 800;
             padding: 2px 6px;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,255,136,0.4);
+            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.4);
+            white-space: nowrap;
         }
 
         @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
         }
 
-        .seat.sun-hot { opacity: 0.2; filter: grayscale(1); }
+        /* --- SUN HOT: WARM TINT --- */
+        .seat.sun-hot {
+            opacity: 0.6;
+            filter: grayscale(0.5) sepia(0.3) hue-rotate(-30deg);
+            /* Warm/Orange tint */
+            border: 1px solid #e74c3c;
+            background: #fadbd8;
+        }
 
         .scan-line {
             position: absolute; top: 0; left: 0; width: 100%; height: 5px;

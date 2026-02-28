@@ -41,6 +41,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
                     </div>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Lost & Found</h5>
+                        <p class="card-text">Manage reported lost items.</p>
+                        <a href="lost_and_found.php" class="btn btn-light">Go</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
