@@ -71,6 +71,21 @@ if ($searchFrom && $searchTo) {
         // Use base_price if available, otherwise fallback to distance-based dummy price
         $price = (!empty($row['base_price']) && $row['base_price'] > 0) ? $row['base_price'] : ($row['distance_km'] * 2); 
         
+        // 12-Hour Requirement check
+        if (!empty($searchDate)) {
+            try {
+                $travel_datetime = new DateTime($searchDate . ' ' . $row['departure_time']);
+                $current_time = new DateTime();
+                $twelve_hours_later = (clone $current_time)->modify('+12 hours');
+                
+                if ($travel_datetime <= $twelve_hours_later) {
+                    continue; // Skip this bus because it departs within 12 hours from now
+                }
+            } catch (Exception $e) {
+                // Ignore date parsing errors and just display the bus
+            }
+        }
+        
         // Generate consistent mock data based on ID
         $opIndex = $row['bus_id'] % count($operators);
         $operatorName = $operators[$opIndex];
@@ -463,7 +478,7 @@ if ($searchFrom && $searchTo) {
                     </div>
                     <div class="col-md-4 col-6">
                         <label class="small text-muted fw-bold mb-2">DATE</label>
-                        <input type="date" name="date" id="inputDate" class="form-input-modern" value="<?php echo htmlspecialchars($searchDate); ?>" required>
+                        <input type="date" name="date" id="inputDate" class="form-input-modern" value="<?php echo htmlspecialchars($searchDate); ?>" min="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="col-md-2 col-6 d-flex align-items-end">
                         <button type="submit" class="btn-search">
@@ -813,7 +828,7 @@ if ($searchFrom && $searchTo) {
                                     ${priceHtml}
                                     <div class="price-tag">₹${displayPrice}</div>
                                 </div>
-                                <a href="#" onclick="selectBus(${b.id}, '${safeName}', ${displayPrice}, '${safeSub}'); return false;" class="btn-seat">View Seats <i class="fas fa-arrow-right ms-1 small"></i></a>
+                                <a href="#" onclick="selectBus(${b.id}, '${safeName}', ${displayPrice}, '${safeSub}', '${safeDep}'); return false;" class="btn-seat">View Seats <i class="fas fa-arrow-right ms-1 small"></i></a>
                             </div>
                         `;
 
@@ -835,7 +850,7 @@ if ($searchFrom && $searchTo) {
                         card.innerHTML = html;
                         card.onclick = (e) => {
                             if(!e.target.closest('.variant-section') && !e.target.closest('.btn-seat')) {
-                                selectBus(b.id, b.name, displayPrice, b.sub); 
+                                selectBus(b.id, b.name, displayPrice, b.sub, safeDep); 
                             }
                         };
                         container.appendChild(card);
@@ -885,14 +900,14 @@ if ($searchFrom && $searchTo) {
             tipsList.innerHTML = tips.map(t => `<li>${t}</li>`).join('');
         }
 
-        function selectBus(id, name, price, sub) {
+        function selectBus(id, name, price, sub, depPrefix) {
             const from = document.getElementById('inputFrom').value;
             const to = document.getElementById('inputTo').value;
             const date = document.getElementById('inputDate').value; // Get Travel Date
             const isSleeper = sub.toLowerCase().includes('sleeper');
             
-            // Updated URL to include bus_id and date
-            window.location.href = `seats.php?bus_id=${id}&date=${date}&name=${encodeURIComponent(name)}&price=${price}&isSleeper=${isSleeper}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+            // Updated URL to include bus_id and date and time
+            window.location.href = `seats.php?bus_id=${id}&date=${date}&name=${encodeURIComponent(name)}&price=${price}&isSleeper=${isSleeper}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&time=${encodeURIComponent(depPrefix)}`;
         }
     </script>
 </body>

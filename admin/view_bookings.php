@@ -14,6 +14,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
             b.travel_date, 
             b.status, 
             u.name as passenger_name, 
+            u.email as passenger_email,
             u.phone as passenger_phone,
             bus.bus_number, 
             bus.bus_type, 

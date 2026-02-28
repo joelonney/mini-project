@@ -468,13 +468,11 @@ while($row = $seatsRes->fetch_assoc()){
             }
         }
 
-        /* --- SUN HOT: WARM TINT --- */
+        /* --- SUN HOT: COMPLETELY HIDDEN (As Requested) --- */
         .seat.sun-hot {
-            opacity: 0.6;
-            filter: grayscale(0.5) sepia(0.3) hue-rotate(-30deg);
-            /* Warm/Orange tint */
-            border: 1px solid #e74c3c;
-            background: #fadbd8;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         .scan-line {
@@ -621,9 +619,17 @@ while($row = $seatsRes->fetch_assoc()){
             
             document.getElementById('busTitle').innerText = params.get('name') || "Select Seats";
             
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('tripTime').value = now.toISOString().slice(0,16);
+            const urlTime = params.get('time');
+            const urlDate = params.get('date');
+            
+            if (urlDate && urlTime) {
+                // Ensure proper formatting for datetime-local (YYYY-MM-DDTHH:MM)
+                document.getElementById('tripTime').value = `${urlDate}T${urlTime}`;
+            } else {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('tripTime').value = now.toISOString().slice(0,16);
+            }
 
             generateSeatLayout(busType);
         });
@@ -762,9 +768,25 @@ while($row = $seatsRes->fetch_assoc()){
             allSeats.forEach(seat => {
                 const id = seat.id;
                 let show = true;
-                if(type === 'window' && !(id.startsWith('L') || id.startsWith('R'))) show = false;
-                if(type === 'aisle' && (id.startsWith('L') || id.startsWith('R'))) show = false;
-                seat.style.display = show ? 'flex' : 'none';
+                if(type === 'window') {
+                    if (id.startsWith('L') || id.startsWith('R') || id.startsWith('U')) show = true;
+                    else show = false;
+                }
+                if(type === 'aisle') {
+                    if (busType === 'seater' && (id.startsWith('M') || id.startsWith('A'))) show = true;
+                    else if (busType === 'sleeper' && id.startsWith('L')) show = true; // For sleeper demonstration, assume Lower is aisle
+                    else show = false;
+                }
+
+                if (show) {
+                    seat.style.visibility = 'visible';
+                    seat.style.opacity = '1';
+                    seat.style.pointerEvents = 'auto';
+                } else {
+                    seat.style.visibility = 'hidden';
+                    seat.style.opacity = '0';
+                    seat.style.pointerEvents = 'none';
+                }
             });
         }
 
@@ -772,24 +794,53 @@ while($row = $seatsRes->fetch_assoc()){
         function analyzeSunlight() {
             const timeInput = document.getElementById('tripTime').value;
             const params = new URLSearchParams(window.location.search);
-            const fromCity = params.get('from');
+            const fromCity = params.get('from') || 'Kochi';
+            const toCity = params.get('to') || 'Bangalore';
             
             if(!timeInput) return alert("Please select a journey time.");
-            if(!fromCity) return; 
 
             const startTime = new Date(timeInput);
-            const coords = cityCoords[fromCity] || { lat: 20, lon: 77 }; 
-            const sunPos = SunCalc.getPosition(startTime, coords.lat, coords.lon);
-            const azimuth = sunPos.azimuth * (180 / Math.PI);
+            const startCoords = cityCoords[fromCity] || cityCoords['Kochi'];
+            const destCoords = cityCoords[toCity] || cityCoords['Bangalore']; 
+            
+            // 1. Calculate Route Heading (Bearing)
+            const lat1 = startCoords.lat * Math.PI/180;
+            const lat2 = destCoords.lat * Math.PI/180;
+            const dLon = (destCoords.lon - startCoords.lon) * Math.PI/180;
+            
+            const y = Math.sin(dLon) * Math.cos(lat2);
+            const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+            let bearing = Math.atan2(y, x) * 180 / Math.PI;
+            bearing = (bearing + 360) % 360; // Normalize 0-360
+
+            // 2. Calculate Sun Azimuth
+            const sunPos = SunCalc.getPosition(startTime, startCoords.lat, startCoords.lon);
+            const sunAzimuth = (sunPos.azimuth * 180 / Math.PI + 180) % 360; // Normalize 0-360
             const altitude = sunPos.altitude * (180 / Math.PI);
 
-            let safeSide = 'Right';
-            let unsafeSide = 'Left';
+            // 3. Determine Sun Side
+            const relativeAngle = (sunAzimuth - bearing + 360) % 360;
             
-            if (azimuth < 180) { safeSide = 'Right'; unsafeSide = 'Left'; }
-            else { safeSide = 'Left'; unsafeSide = 'Right'; }
+            let safeSide = 'Right'; // Default
+            let unsafeSide = 'Left'; 
+            let statusMessage = "Sun is very low or it's night time. All seats are good!";
+            
+            if (altitude > 5) {
+                // Sun is up! If relative angle > 0 and < 180, sun is on the Right side.
+                if (relativeAngle > 0 && relativeAngle < 180) {
+                    safeSide = 'Left'; 
+                    unsafeSide = 'Right';
+                    statusMessage = `Heading ${bearing.toFixed(0)}°. Sun is shining from the Right (${sunAzimuth.toFixed(0)}°). Left side seats are recommended!`;
+                } else {
+                    safeSide = 'Right'; 
+                    unsafeSide = 'Left';
+                    statusMessage = `Heading ${bearing.toFixed(0)}°. Sun is shining from the Left (${sunAzimuth.toFixed(0)}°). Right side seats are recommended!`;
+                }
+            }
+            
+            const isHighNoon = altitude > 70;
+            if (isHighNoon) statusMessage = "Sun is almost directly overhead. Mild exposure on both sides.";
 
-            const isHighNoon = altitude > 50;
             const scanLine = document.getElementById('scanLine');
             const statusBox = document.getElementById('sunStatus');
             const autoBtn = document.getElementById('autoSelectBtn');
@@ -802,10 +853,27 @@ while($row = $seatsRes->fetch_assoc()){
             // Remove previous highlights
             allSeats.forEach(s => s.classList.remove('sun-safe', 'sun-hot'));
 
+            // Filter safe vs unsafe prefix
+            let safePrefixes = ['L']; // Default if safe side is left
+            let unsafePrefixes = ['R'];
+            if(safeSide === 'Right') { safePrefixes = ['R']; unsafePrefixes = ['L']; }
+            
+            if(busType !== 'sleeper') {
+               if(safeSide === 'Right') { safePrefixes = ['A', 'R']; unsafePrefixes = ['L', 'M']; }
+               else { safePrefixes = ['L', 'M']; unsafePrefixes = ['A','R']; }
+            }
+
             setTimeout(() => {
                 scanLine.style.display = 'none';
                 
-                if(isHighNoon) {
+                // Reset all
+                document.querySelectorAll('.seat').forEach(s => {
+                    s.classList.remove('sun-safe', 'sun-hot');
+                });
+
+                if (altitude < 0) {
+                    statusBox.innerHTML = '<i class="fas fa-moon me-2"></i> Night journey! All seats are comfortable. ' + statusMessage;
+                } else if(isHighNoon) {
                     statusBox.innerHTML = `<i class="fas fa-sun fa-beat text-warning"></i> It's high noon! <b>Window seats are hot</b>. We recommend <b>Aisle</b> seats.`;
                     statusBox.style.borderColor = "#ffc107"; statusBox.style.color = "#856404";
                     allSeats.forEach(s => {
@@ -813,15 +881,26 @@ while($row = $seatsRes->fetch_assoc()){
                         else s.classList.add('sun-hot');
                     });
                 } else {
-                    statusBox.innerHTML = `<i class="fas fa-check-circle text-success"></i> Sun is on the <b>${unsafeSide}</b>. We recommend seats on the <b>${safeSide}</b> side.`;
-                    statusBox.style.borderColor = "#198754"; statusBox.style.color = "#0f5132";
-                    allSeats.forEach(s => {
-                        let isSafe = false;
-                        if(safeSide === 'Left' && (s.id.startsWith('L'))) isSafe = true;
-                        if(safeSide === 'Right' && (s.id.startsWith('R'))) isSafe = true;
-                        if(isSafe) s.classList.add('sun-safe');
-                        else s.classList.add('sun-hot');
+                    allSeats.forEach(seat => {
+                        let id = seat.id;
+                        let isSafe = safePrefixes.some(p => id.startsWith(p));
+                        let isUnsafe = unsafePrefixes.some(p => id.startsWith(p));
+
+                        // Sleeper fallback (U, L are top/bottom, let's keep it simple)
+                        if(busType === 'sleeper' && (id.startsWith('U') || id.startsWith('L'))) {
+                             // Assuming U isn't inherently left or right in this view, bypass for sleeper to avoid confusion
+                             return;
+                        }
+
+                        if (isSafe && !isHighNoon) {
+                            seat.classList.add('sun-safe');
+                        } else if (isUnsafe && !isHighNoon) {
+                            seat.classList.add('sun-hot');
+                        }
                     });
+
+                    statusBox.innerHTML = `<i class="fas fa-info-circle me-2"></i> ${statusMessage}`;
+                    statusBox.style.borderColor = "#198754"; statusBox.style.color = "#0f5132";
                 }
                 
                 statusBox.style.display = 'block';
@@ -832,12 +911,27 @@ while($row = $seatsRes->fetch_assoc()){
         }
 
         function autoSelectBest() {
+            // Because sun-hot seats have visibility: hidden and pointer-events: none,
+            // we ONLY want to auto-select seats that are actively visible and safe.
             const safeSeats = document.querySelectorAll('.seat.sun-safe:not(.selected)');
             if(safeSeats.length === 0) return alert("No safe seats available!");
+            
+            // To be extra safe, ensure we are not clicking hidden items
+            let visibleSafeSeats = Array.from(safeSeats).filter(seat => {
+                const style = window.getComputedStyle(seat);
+                return style.opacity !== '0' && style.visibility !== 'hidden' && style.display !== 'none';
+            });
+
+            if(visibleSafeSeats.length === 0) return alert("No visible safe seats available based on your current filter!");
+
             let count = 0;
-            safeSeats.forEach(seat => {
+            visibleSafeSeats.forEach(seat => {
                 if(count < 2) {
-                    seat.click();
+                    if(typeof seat.onclick === "function") {
+                        seat.onclick(); 
+                    } else {
+                        seat.click();
+                    }
                     count++;
                 }
             });
