@@ -64,6 +64,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
                     </div>
                 </div>
             </div>
+            <div class="col-md-4 mt-3 mt-md-0">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Live Tracking System</h5>
+                        <p class="card-text">Manage GPS routes, simulation engine, and tracking.</p>
+                        <a href="trip_management.php" class="btn btn-light" style="color: #0dcaf0;">Manage Trips</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>

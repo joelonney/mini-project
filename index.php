@@ -12,13 +12,21 @@ if ($sourceResult) {
         $sources[] = $row['source'];
     }
 }
-
-$destResult = $conn->query("SELECT DISTINCT destination FROM routes ORDER BY destination ASC");
-if ($destResult) {
-    while ($row = $destResult->fetch_assoc()) {
-        $destinations[] = $row['destination'];
+$routesResult = $conn->query("SELECT source, destination FROM routes ORDER BY source ASC, destination ASC");
+$routes = [];
+if ($routesResult) {
+    while ($row = $routesResult->fetch_assoc()) {
+        $source = $row['source'];
+        $dest = $row['destination'];
+        if (!isset($routes[$source])) {
+            $routes[$source] = [];
+        }
+        if (!in_array($dest, $routes[$source])) {
+            $routes[$source][] = $dest;
+        }
     }
 }
+$sources = array_keys($routes);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,14 +40,17 @@ if ($destResult) {
 
     <style>
         :root {
+            /* Light Theme Variables */
             --primary: #E53935;       /* Vibrant Red */
             --primary-dark: #B71C1C;  /* Darker Red for hover */
             --primary-light: #FFEBEE; /* Very light red for backgrounds */
-            --accent: #F8F9FC;        /* Soft blue-grey background */
+            --bg-color: #F8F9FC;      /* Soft blue-grey background */
+            --surface-color: #FFFFFF; /* White */
             --text-dark: #1E293B;     /* Slate 800 */
             --text-muted: #64748B;    /* Slate 500 */
-            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.7);
             --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
             --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
@@ -52,10 +63,19 @@ if ($destResult) {
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--accent);
+            background: var(--bg-color);
             color: var(--text-dark);
             overflow-x: hidden;
             line-height: 1.6;
+        }
+
+        /* --- Apple-Like Liquid Glass Utility --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
         }
 
         /* --- Animations --- */
@@ -98,16 +118,15 @@ if ($destResult) {
 
         /* --- Navbar --- */
         .navbar {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(0,0,0,0.03);
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
             transition: all 0.3s ease;
             padding: 1rem 0;
         }
         
         .navbar.scrolled {
-            background: rgba(255, 255, 255, 0.95);
             box-shadow: var(--shadow-sm);
             padding: 0.7rem 0;
         }
@@ -136,15 +155,17 @@ if ($destResult) {
             position: relative;
         }
 
+        /* --- Theme Toggle Button --- */
         .btn-nav {
-            border: 2px solid #E2E8F0;
+            border: 1px solid var(--glass-border);
             color: var(--text-dark);
             font-weight: 600;
             padding: 10px 24px;
             border-radius: 50px;
             transition: var(--transition);
-            background: transparent;
+            background: var(--glass-bg);
             text-decoration: none;
+            backdrop-filter: blur(10px);
         }
         
         .btn-nav:hover {
@@ -223,9 +244,10 @@ if ($destResult) {
         .search-container {
             background: var(--glass-bg);
             backdrop-filter: blur(24px);
-            padding: 10px;
+            -webkit-backdrop-filter: blur(24px);
+            padding: 12px;
             border-radius: var(--radius-2xl);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--glass-shadow);
             margin-bottom: 4rem;
             border: 1px solid var(--glass-border);
             position: relative;
@@ -234,7 +256,7 @@ if ($destResult) {
         
         .search-container:hover { 
             transform: translateY(-5px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.15);
         }
 
         .search-input-wrapper {
@@ -255,10 +277,10 @@ if ($destResult) {
 
         .form-control-hero {
             padding-left: 64px;
-            border: 1px solid #E2E8F0;
+            border: 1px solid var(--glass-border);
             height: 100%;
             border-radius: 20px;
-            background: white;
+            background: var(--surface-color);
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--text-dark);
@@ -269,7 +291,9 @@ if ($destResult) {
         .form-control-hero:focus { 
             outline: none; 
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.1);
+            box-shadow: 0 0 0 4px var(--primary-light);
+            background: var(--surface-color);
+            color: var(--text-dark);
         }
 
         .btn-hero-search {
@@ -427,7 +451,8 @@ if ($destResult) {
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
-                <div class="d-flex gap-3 mt-3 mt-lg-0 align-items-center">
+                    <a href="track.php" class="btn btn-nav text-primary" style="border-color: var(--primary);"><i class="fas fa-map-marker-alt me-2"></i>Track Bus</a>
+                    
                     <?php if(isset($_SESSION['user_id'])): ?>
                         <span class="me-2 fw-bold text-muted">Hi, <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
                         
@@ -479,11 +504,8 @@ if ($destResult) {
                                 <div class="col-md-5">
                                     <div class="search-input-wrapper">
                                         <i class="fas fa-location-arrow search-icon"></i>
-                                        <select name="to" id="homeTo" class="form-control form-control-hero ps-5" required>
-                                            <option value="" disabled selected>To (e.g. Chennai)</option>
-                                            <?php foreach ($destinations as $dest): ?>
-                                                <option value="<?php echo htmlspecialchars($dest); ?>"><?php echo htmlspecialchars($dest); ?></option>
-                                            <?php endforeach; ?>
+                                        <select name="to" id="homeTo" class="form-control form-control-hero ps-5" required disabled>
+                                            <option value="" disabled selected>Select Source First</option>
                                         </select>
                                     </div>
                                 </div>
@@ -502,7 +524,7 @@ if ($destResult) {
                     <div class="route-dot dot-start"></div>
                     <div class="route-dot dot-end"></div>
                     <i class="fas fa-bus bus-anim-icon"></i>
-                    <img src="https://picsum.photos/seed/busmodern/800/600" class="hero-main-img" alt="Bus Travel">
+                    <img src="https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=1471&auto=format&fit=crop" class="hero-main-img" alt="Modern Bus Travel">
                     <div class="float-badge">
                         <div class="icon-circle-sm bg-success"><i class="fas fa-sun"></i></div>
                         <div>
@@ -516,7 +538,7 @@ if ($destResult) {
     </section>
 
     <section class="container mb-5">
-        <div class="stats-section">
+        <div class="stats-section glass-panel">
             <div class="container">
                 <div class="row g-4">
                     <div class="col-md-4 stat-item">
@@ -542,21 +564,21 @@ if ($destResult) {
         </div>
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card glass-panel" style="background: var(--surface-color);">
                     <div class="icon-box-lg"><i class="fas fa-sun"></i></div>
                     <h5 class="fw-bold">Avoid Sunlight</h5>
                     <p class="text-muted mb-0">Our 3D seat maps show you exactly where the sun hits. Pick a shaded seat and travel cool.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card glass-panel" style="background: var(--surface-color);">
                     <div class="icon-box-lg"><i class="fas fa-map-marked-alt"></i></div>
                     <h5 class="fw-bold">Live Tracking</h5>
                     <p class="text-muted mb-0">Share your live location with family. Track your bus in real-time on map.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card glass-panel" style="background: var(--surface-color);">
                     <div class="icon-box-lg"><i class="fas fa-ticket-alt"></i></div>
                     <h5 class="fw-bold">Easy Booking</h5>
                     <p class="text-muted mb-0">Book in under 60 seconds. QR-ticket support means no printing required.</p>
@@ -574,15 +596,17 @@ if ($destResult) {
                 </div>
                 <div class="col-lg-2">
                     <h6 class="footer-heading">Support</h6>
-                    <a href="#" class="footer-link">Help Center</a>
-                    <a href="#" class="footer-link">Privacy Policy</a>
+                    <a href="#" class="footer-link" data-bs-toggle="modal" data-bs-target="#helpCenterModal">Help Center</a>
+                    <a href="#" class="footer-link" data-bs-toggle="modal" data-bs-target="#privacyPolicyModal">Privacy Policy</a>
                 </div>
                 <div class="col-lg-4">
                     <h6 class="footer-heading">Subscribe</h6>
-                    <div class="input-group">
-                        <input type="email" class="form-control" placeholder="Email">
-                        <button class="btn btn-primary" style="background:var(--primary); border:none;">Go</button>
-                    </div>
+                    <form id="subscribeForm" onsubmit="handleSubscribe(event)">
+                        <div class="input-group">
+                            <input type="email" class="form-control" id="subscriberEmail" placeholder="Email Address" required style="background: var(--surface-color); color: var(--text-dark); border-color: var(--glass-border);">
+                            <button type="submit" class="btn btn-primary" style="background:var(--primary); border:none;">Subscribe</button>
+                        </div>
+                    </form>
                 </div>
             </div>
             <div class="border-top mt-5 pt-4 text-center">
@@ -593,6 +617,31 @@ if ($destResult) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Store technical routes grouping from PHP to JS
+        const availableRoutes = <?php echo json_encode($routes); ?>;
+        
+        // Handle dependencies between From and To dropdowns
+        document.getElementById('homeFrom').addEventListener('change', function() {
+            const source = this.value;
+            const toSelect = document.getElementById('homeTo');
+            
+            // Clear current options
+            toSelect.innerHTML = '<option value="" disabled selected>Select Destination</option>';
+            
+            if (source && availableRoutes[source]) {
+                toSelect.disabled = false;
+                availableRoutes[source].forEach(dest => {
+                    const option = document.createElement('option');
+                    option.value = dest;
+                    option.textContent = dest;
+                    toSelect.appendChild(option);
+                });
+            } else {
+                toSelect.disabled = true;
+                toSelect.innerHTML = '<option value="" disabled selected>Select Source First</option>';
+            }
+        });
+
         function handleHomeSearch(e) {
             e.preventDefault();
             const btn = document.getElementById('searchBtn');
@@ -607,6 +656,135 @@ if ($destResult) {
                 window.location.href = `search.php?from=${encodeURIComponent(fromVal)}&to=${encodeURIComponent(toVal)}`;
             }, 800);
         }
+
+        function handleSubscribe(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('subscriberEmail');
+            
+            // Basic simulation of a subscribe action 
+            if(emailInput.value) {
+                // Show the toast notification
+                const toast = document.getElementById('subscribeToast');
+                toast.classList.add('show');
+                
+                // Clear the input
+                emailInput.value = '';
+                
+                // Hide the toast after 3 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
     </script>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container">
+        <div class="custom-toast" id="subscribeToast">
+            <i class="fas fa-check-circle fs-4 text-success"></i>
+            <div>
+                <h6 class="mb-0 fw-bold">Subscribed!</h6>
+                <small class="text-muted">Thanks for subscribing to our demo newsletter.</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Center Modal -->
+    <div class="modal fade" id="helpCenterModal" tabindex="-1" aria-labelledby="helpCenterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="helpCenterModalLabel"><i class="fas fa-question-circle text-primary me-2"></i>Help Center</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="accordion accordion-flush" id="helpAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    How do I search for a bus?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body text-muted">
+                                    Simply select your source (From) and your destination (To) from the drop-down menus on the main page and click "Search". You'll be redirected to a page showing all available buses for your route.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    What are "Sun-Hot" seats?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body text-muted">
+                                    Our unique Smart Seats feature calculates the sun's position relative to the traveling direction of the bus. "Sun-Hot" seats are those likely to receive direct sunlight during the journey. They may be priced differently, and allow you to make a more comfortable booking choice.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    How do I view my booked tickets?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body text-muted">
+                                    Once logged into your account, click on "My Bookings" in the upper right navigation bar. You will be able to see all your upcoming and past journeys and view your ticket's QR code there.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFour">
+                                <button class="accordion-button collapsed fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    I need further assistance, who do I contact?
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body text-muted">
+                                    As this is currently a demonstration platform, active customer service is not available. Thank you for testing SmartBus!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal fade" id="privacyPolicyModal" tabindex="-1" aria-labelledby="privacyPolicyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="privacyPolicyModalLabel"><i class="fas fa-shield-alt text-primary me-2"></i>Privacy Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4 text-muted" style="font-size: 0.95rem;">
+                    <h6 class="fw-bold text-dark">1. Introduction</h6>
+                    <p>Welcome to SmartBus. We value your privacy and are committed to protecting any personal information you provide when using our platform. This policy outlines how we handle the limited data collected.</p>
+                    
+                    <h6 class="fw-bold text-dark mt-4">2. Data Collection (Project Demo)</h6>
+                    <p><strong>Please note:</strong> SmartBus is an academic/portfolio demonstration project. While we ask for names and email addresses during the registration and booking processes, this data is <strong>only stored locally</strong> within the project's simulated database environment. It is not shared, sold, or transmitted to any external third-party services.</p>
+
+                    <h6 class="fw-bold text-dark mt-4">3. Use of Information</h6>
+                    <p>The information collected (such as mock bookings and simulated payments) is solely used to demonstrate the functionality of the SmartBus application, including managing the user dashboard, displaying seat reservations, and testing the database logic.</p>
+
+                    <h6 class="fw-bold text-dark mt-4">4. Payments and Security</h6>
+                    <p>No real payment processing occurs on this platform. Any payment details entered during the checkout simulation are not processed through a real payment gateway and are discarded safely. Do not enter real credit card information on this demonstration site.</p>
+
+                    <h6 class="fw-bold text-dark mt-4">5. Revisions</h6>
+                    <p>We may update this policy if further features are added to the demonstration project. Your continued use of the SmartBus demo constitutes acceptance of any changes.</p>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
