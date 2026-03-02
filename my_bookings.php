@@ -9,16 +9,26 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $current_date = date('Y-m-d');
 
+// Handle claiming lost and found items
+if (isset($_GET['claim_item'])) {
+    $item_id = intval($_GET['claim_item']);
+    $conn->query("UPDATE lost_and_found SET status='CLAIMED' WHERE item_id=$item_id");
+    header("Location: my_bookings.php");
+    exit();
+}
+
 // Fetch all bookings
 $sql = "
     SELECT b.*, bus.bus_number, bus.bus_type, bus.departure_time, bus.arrival_time, 
            r.source, r.destination, r.distance_km, 
-           s.seat_number, t.ticket_id
+           s.seat_number, t.ticket_id,
+           ts.status as admin_trip_status
     FROM bookings b
     JOIN buses bus ON b.bus_id = bus.bus_id
     JOIN routes r ON bus.route_id = r.route_id
     JOIN seats s ON b.seat_id = s.seat_id
     LEFT JOIN tickets t ON b.booking_id = t.booking_id
+    LEFT JOIN trip_status ts ON bus.bus_id = ts.bus_id AND b.travel_date = ts.trip_date
     WHERE b.user_id = ?
     ORDER BY b.travel_date DESC, bus.departure_time ASC
 ";
@@ -34,10 +44,13 @@ $cancelled = [];
 while ($row = $result->fetch_assoc()) {
     if ($row['status'] == 'CANCELLED') {
         $cancelled[] = $row;
+    } elseif ($row['admin_trip_status'] === 'Completed') {
+        // Automatically consider trips marked "Completed" in Admin Panel as completed past trips
+        $completed[] = $row;
     } elseif ($row['travel_date'] >= $current_date) {
-        $upcoming[] = $row; // Future or Today (Simplified)
+        $upcoming[] = $row; // Future or Today (Not completed)
     } else {
-        $completed[] = $row; // Past
+        $completed[] = $row; // Past (Date has passed)
     }
 }
 ?>
@@ -110,6 +123,61 @@ while ($row = $result->fetch_assoc()) {
         </div>
     </div>
 
+    <!-- User-Facing Lost & Found -->
+    <div class="container mt-5 mb-5 pb-4 border-top pt-5">
+        <h3 class="mb-4 fw-bold"><i class="fas fa-search-location text-warning me-2"></i>Lost & Found (Past Trips)</h3>
+        <?php
+        $past_bus_ids = [];
+        foreach ($completed as $c) {
+            $past_bus_ids[] = $c['bus_id'];
+        }
+        $past_bus_ids = array_unique($past_bus_ids);
+
+        $hasLostItems = false;
+        if (!empty($past_bus_ids)) {
+            foreach($past_bus_ids as $p_bus_id) {
+                // Get bus route details for display
+                $bus_no = '';
+                foreach($completed as $c) {
+                    if($c['bus_id'] == $p_bus_id) {
+                        $bus_no = $c['bus_number'] . " (" . $c['source'] . " - " . $c['destination'] . ")";
+                        break;
+                    }
+                }
+                
+                $lost_res = $conn->query("SELECT * FROM lost_and_found WHERE bus_id = $p_bus_id ORDER BY found_date DESC");
+                if ($lost_res && $lost_res->num_rows > 0) {
+                    $hasLostItems = true;
+                    echo "<div class='card mb-3 shadow-sm border-0 rounded-4'>";
+                    echo "<div class='card-header bg-white fw-bold py-3 text-secondary'>Bus: " . htmlspecialchars($bus_no) . "</div>";
+                    echo "<div class='card-body p-0'>";
+                    echo "<table class='table table-hover mb-0 align-middle'>";
+                    echo "<tbody>";
+                    while($item = $lost_res->fetch_assoc()) {
+                        echo "<tr>";
+                        echo "<td class='ps-4 text-muted small' style='width: 20%;'>" . date('d M Y', strtotime($item['found_date'])) . "</td>";
+                        echo "<td style='width: 50%;'>" . htmlspecialchars($item['description']) . "</td>";
+                        echo "<td><span class='badge bg-" . ($item['status'] == 'FOUND' ? 'warning text-dark' : 'success') . "'>" . $item['status'] . "</span></td>";
+                        echo "<td class='text-end pe-4'>";
+                        if($item['status'] == 'FOUND') {
+                            echo "<a href='my_bookings.php?claim_item=" . $item['item_id'] . "' class='btn btn-sm btn-outline-success rounded-pill px-3' onclick='return confirm(\"Are you sure this is your item?\");'>Claim Item</a>";
+                        } else {
+                            echo "<span class='text-muted small'><i class='fas fa-check'></i> Claimed</span>";
+                        }
+                        echo "</td>";
+                        echo "</tr>";
+                    }
+                    echo "</tbody></table></div></div>";
+                }
+            }
+        }
+        
+        if (!$hasLostItems) {
+            echo "<div class='alert alert-light text-center py-4 text-muted'>No lost items have been reported for any of your past trips.</div>";
+        }
+        ?>
+    </div>
+
     <!-- Report Lost Item Modal -->
     <div class="modal fade" id="lostModal" tabindex="-1">
         <div class="modal-dialog">
@@ -140,6 +208,12 @@ while ($row = $result->fetch_assoc()) {
             document.getElementById('modalBusId').value = busId;
             document.getElementById('modalBookingId').value = bookingId;
             new bootstrap.Modal(document.getElementById('lostModal')).show();
+        }
+        
+        function confirmCancel(bookingId) {
+            if (confirm("Are you sure you want to cancel this ticket? You will get the refund to your same payment method used for booking within 2-3 working days.")) {
+                window.location.href = `includes/cancel_ticket.php?id=${bookingId}`;
+            }
         }
     </script>
 </body>
@@ -191,11 +265,17 @@ function renderBookings($list, $type) {
                         </div>
                     </div>
 
-                    <div class="d-flex gap-2 mt-3">
+                    <div class="d-flex gap-2 mt-3 flex-wrap">
                         <?php if ($type != 'cancelled'): ?>
                             <a href="ticket.php?id=<?php echo $row['booking_id']; ?>" class="btn btn-outline-primary btn-sm flex-grow-1">
                                 <i class="fas fa-qrcode me-1"></i> Ticket
                             </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($type == 'upcoming'): ?>
+                            <button onclick="confirmCancel(<?php echo $row['booking_id']; ?>)" class="btn btn-outline-danger btn-sm flex-grow-1">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </button>
                         <?php endif; ?>
                         
                         <?php if ($type == 'completed'): ?>

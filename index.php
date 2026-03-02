@@ -540,17 +540,17 @@ $sources = array_keys($routes);
     <section class="container mb-5">
         <div class="stats-section glass-panel">
             <div class="container">
-                <div class="row g-4">
+                <div class="row g-4" id="statsRow">
                     <div class="col-md-4 stat-item">
-                        <div class="stat-number">10,000+</div>
+                        <div class="stat-number fw-bold" data-target="10000">0</div>
                         <div class="stat-label">Happy Travelers</div>
                     </div>
                     <div class="col-md-4 stat-item">
-                        <div class="stat-number">5,000+</div>
+                        <div class="stat-number fw-bold" data-target="5000">0</div>
                         <div class="stat-label">Daily Trips</div>
                     </div>
                     <div class="col-md-4 stat-item">
-                        <div class="stat-number">50+</div>
+                        <div class="stat-number fw-bold" data-target="50">0</div>
                         <div class="stat-label">Cities Connected</div>
                     </div>
                 </div>
@@ -786,5 +786,52 @@ $sources = array_keys($routes);
             </div>
         </div>
     </div>
+
+    <script>
+        // Set minimum date to today for the date picker
+        document.addEventListener("DOMContentLoaded", function () {
+            let dateField = document.getElementById("date");
+            if(dateField) {
+                let today = new Date().toISOString().split('T')[0];
+                dateField.setAttribute("min", today);
+            }
+        });
+        
+        // Counter Animation Logic setup
+        document.addEventListener('DOMContentLoaded', () => {
+            const counters = document.querySelectorAll('.stat-number');
+            const speed = 200; // The lower the slower
+
+            const animateCounters = () => {
+                counters.forEach(counter => {
+                    const updateCount = () => {
+                        const target = +counter.getAttribute('data-target');
+                        const count = +counter.innerText.replace(/,/g, '').replace('+', '');
+                        const inc = target / speed;
+
+                        if (count < target) {
+                            counter.innerText = Math.ceil(count + inc).toLocaleString('en-US');
+                            setTimeout(updateCount, 15);
+                        } else {
+                            counter.innerText = target.toLocaleString('en-US') + '+';
+                        }
+                    };
+                    updateCount();
+                });
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounters();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 }); // Trigger when 50% of the row is visible
+
+            const statsRow = document.getElementById('statsRow');
+            if (statsRow) observer.observe(statsRow);
+        });
+    </script>
 </body>
 </html>

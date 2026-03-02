@@ -43,9 +43,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error = "No user found.";
     }
 }
-?><
+?>
 
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -398,27 +398,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <!-- Spinner (hidden by default) -->
                     <div class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></div>
                 </button>
-            </form>
-
-            <!-- Divider -->
-            <div class="divider">
-                <span>Or continue with</span>
-            </div>
-
-            <!-- Social Login -->
-            <div class="social-login">
-                <a href="login.php?social_login=Google" class="social-btn text-decoration-none">
-                    <i class="fab fa-google"></i>
-                </a>
-                <a href="login.php?social_login=Apple" class="social-btn text-decoration-none">
-                    <i class="fab fa-apple"></i>
-                </a>
-                <a href="login.php?social_login=Facebook" class="social-btn text-decoration-none">
-                    <i class="fab fa-facebook-f"></i>
-                </a>
-            </div>
-
-            <!-- Register Link -->
+            </form>            <!-- Register Link -->
             <div class="small-text">
                 New here? <a href="register.php">Create account</a>
             </div>

@@ -25,6 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle bulk complete override
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] == 'complete_all') {
+    $stmt = $conn->prepare("UPDATE trip_status SET status = 'Completed', current_stop_index = 999 WHERE trip_date = ?");
+    $stmt->bind_param("s", $today);
+    if ($stmt->execute()) {
+        $message = "All trips for today have been marked as Completed.";
+    }
+}
+
 // Fetch all trips for today
 $q = "SELECT ts.id as trip_id, ts.bus_id, ts.status, ts.current_stop_index, b.bus_number, r.source, r.destination, r.route_id, b.departure_time 
       FROM trip_status ts 
@@ -60,7 +69,13 @@ $trips_result = $conn->query($q);
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Live GPS Trip Management</h2>
-            <div>
+            <div class="d-flex gap-2">
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="action" value="complete_all">
+                    <button type="submit" class="btn btn-success fw-bold rounded-pill" onclick="return confirm('Are you sure you want to mark ALL trips today as Completed?');">
+                        <i class="fas fa-check-double me-2"></i> Complete All Trips
+                    </button>
+                </form>
                 <button id="toggleSim" class="btn btn-outline-primary fw-bold rounded-pill">
                     <i class="fas fa-play me-2"></i> Start Auto-Simulation
                 </button>

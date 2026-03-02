@@ -465,7 +465,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-check mb-4 small">
                     <input class="form-check-input" type="checkbox" id="terms" required>
                     <label class="form-check-label text-muted" for="terms" style="font-weight: 500;">
-                        I agree to the <a href="#" class="fw-bold" style="color:var(--primary);">Terms & Conditions</a>
+                        I agree to the <a href="#" class="fw-bold" style="color:var(--primary);" data-bs-toggle="modal" data-bs-target="#termsModal">Terms & Conditions</a>
                     </label>
                 </div>
 
@@ -476,21 +476,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </button>
             </form>
 
-            <!-- Social Login -->
-            <div class="social-divider">Or continue with</div>
 
-            <button class="btn-social">
-                <i class="fab fa-google" style="color: #DB4437;"></i>
-                <span>Google</span>
-            </button>
-            
-            <button class="btn-social">
-                <i class="fab fa-apple"></i>
-                <span>Apple</span>
-            </button>
 
             <div class="auth-links">
                 Already have an account? <a href="login.php">Login here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms & Conditions Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark" id="termsModalLabel"><i class="fas fa-file-contract text-primary me-2"></i>Terms & Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4 text-muted" style="font-size: 0.95rem;">
+                    <h6 class="fw-bold text-dark">1. Acceptance of Terms</h6>
+                    <p>By creating an account on SmartBus, you agree to abide by these Terms of Service. This is a demonstration project, and no real travel services are provided.</p>
+
+                    <h6 class="fw-bold text-dark mt-4">2. User Accounts</h6>
+                    <p>You are responsible for maintaining the confidentiality of your account credentials. The data entered (such as names and emails) will be stored in our local database for simulation purposes.</p>
+
+                    <h6 class="fw-bold text-dark mt-4">3. Booking & Payments</h6>
+                    <p>All bookings made through this platform are mock reservations. No actual seats are reserved on real buses, and no real monetary transactions take place. Do not enter legitimate credit card information.</p>
+
+                    <h6 class="fw-bold text-dark mt-4">4. Liability</h6>
+                    <p>SmartBus is provided "as is" for demonstration and academic purposes. We are not liable for any issues arising from the use of this software.</p>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
