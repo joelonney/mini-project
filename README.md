@@ -134,22 +134,20 @@ Use these default credentials to test the system:
 
 ## 📸 Screenshots
 
-*(Replace the placeholder URLs with your actual image paths once they are uploaded to the repository.)*
-
 ### 1. Home / Search Page
-![Home Page Placeholder](https://via.placeholder.com/800x400?text=Home+Page+Screenshot)
+![Home Page Screenshot](assets/img/homepage.png)
 
 ### 2. Smart Seat Selection (Sun Analysis)
-![Seat Selection Placeholder](https://via.placeholder.com/800x400?text=Seat+Selection+Screenshot)
+![Seat Selection Screenshot](assets/img/seat-selection.png)
 
 ### 3. Generated E-Ticket with QR Code
-![E-Ticket Placeholder](https://via.placeholder.com/800x400?text=E-Ticket+Screenshot)
+![E-Ticket Screenshot](assets/img/e-ticket.png)
 
 ### 4. Admin Dashboard
-![Admin Dashboard Placeholder](https://via.placeholder.com/800x400?text=Admin+Dashboard+Screenshot)
+![Admin Dashboard Screenshot](assets/img/admin-dashboard.png)
 
 ### 5. Live Bus Tracking
-![Live Tracking Placeholder](https://via.placeholder.com/800x400?text=Live+Tracking+Screenshot)
+![Live Tracking Screenshot](assets/img/bus-tracking.png)
 
 ---
 

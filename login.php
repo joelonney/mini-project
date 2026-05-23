@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $sql = "SELECT user_id, name, password, role FROM users WHERE email = ?";
+    $sql = "SELECT user_id, name, password, role, profile_photo FROM users WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -28,6 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['user_id'] = $row['user_id'];
             $_SESSION['user_name'] = $row['name'];
             $_SESSION['role'] = $row['role'];
+            $_SESSION['profile_photo'] = $row['profile_photo'];
 
             // Redirect based on role
             if ($row['role'] == 'ADMIN') {

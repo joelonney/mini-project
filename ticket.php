@@ -19,7 +19,7 @@ $user_id = $_SESSION['user_id'];
 // We join multiple tables to get a complete picture: Bookings, Buses, Routes, Seats, Users
 $sql = "SELECT 
             b.booking_id, b.travel_date, b.status,
-            u.name as passenger_name, u.phone,
+            u.name as passenger_name, u.phone, u.profile_photo,
             bus.bus_number, bus.bus_type, bus.departure_time,
             r.source, r.destination,
             s.seat_number,
@@ -155,7 +155,20 @@ $ticket = $result->fetch_assoc();
                 <div class="row">
                     <div class="col-md-4">
                         <div class="info-label">Passenger</div>
-                        <div class="info-value"><?php echo htmlspecialchars($ticket['passenger_name']); ?></div>
+                        <div class="d-flex align-items-center mb-3">
+                            <?php if(isset($ticket['profile_photo']) && !empty($ticket['profile_photo'])): ?>
+                                <img src="assets/img/profiles/<?php echo htmlspecialchars($ticket['profile_photo']); ?>" 
+                                     alt="Passenger" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 50px; height: 50px; object-fit: cover; border: 2px solid #ddd;">
+                            <?php else: ?>
+                                <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center text-white me-3" 
+                                     style="width: 50px; height: 50px; font-weight: bold; font-size: 1.2rem; border: 2px solid #ddd;">
+                                    <?php echo strtoupper(substr($ticket['passenger_name'], 0, 1)); ?>
+                                </div>
+                            <?php endif; ?>
+                            <div class="info-value mb-0" style="margin-bottom:0 !important;"><?php echo htmlspecialchars($ticket['passenger_name']); ?></div>
+                        </div>
 
                         <div class="info-label">Bus Number</div>
                         <div class="info-value"><?php echo $ticket['bus_number']; ?></div>

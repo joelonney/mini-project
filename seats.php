@@ -683,7 +683,9 @@ while($row = $seatsRes->fetch_assoc()){
                         let isSold = (data.status === 'sold');
                         let isPremium = (i <= 2); // First 2 rows premium logic
                         
-                        createSeat(container, key, isSold, 'seat', key, data.price, isPremium);
+                        let finalPrice = isPremium ? parseInt(data.price) + 150 : parseInt(data.price);
+                        
+                        createSeat(container, key, isSold, 'seat', key, finalPrice, isPremium);
                         
                         if(pos === 'M') {
                             const gap = document.createElement('div'); container.appendChild(gap);

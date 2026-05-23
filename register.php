@@ -6,13 +6,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $phone = $_POST['phone'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Secure hashing
+    
+    // Default image
+    $profile_photo = 'default.png';
 
-    $sql = "INSERT INTO users (name, email, phone, password, role) VALUES (?, ?, ?, ?, 'USER')";
+    // Handle Profile Photo Upload
+    if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = 'assets/img/profiles/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        // Generate a unique identifier for the file
+        $fileName = time() . '_' . basename($_FILES['profile_photo']['name']);
+        $targetFilePath = $uploadDir . $fileName;
+        $fileType = pathinfo($targetFilePath, PATHINFO_EXTENSION);
+        
+        // Allow certain file formats
+        $allowTypes = array('jpg','png','jpeg','gif');
+        if(in_array(strtolower($fileType), $allowTypes)){
+            if(move_uploaded_file($_FILES["profile_photo"]["tmp_name"], $targetFilePath)){
+                $profile_photo = $fileName;
+            }
+        }
+    }
+
+    $sql = "INSERT INTO users (name, email, phone, password, role, profile_photo) VALUES (?, ?, ?, ?, 'USER', ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $name, $email, $phone, $password);
+    $stmt->bind_param("sssss", $name, $email, $phone, $password, $profile_photo);
 
     if ($stmt->execute()) {
         header("Location: login.php?success=1");
+        exit();
     } else {
         echo "Error: " . $stmt->error;
     }
@@ -426,7 +451,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <p class="text-muted small">Start your journey with smarter travel.</p>
             </div>
 
-            <form action="register.php" method="POST">
+            <form action="register.php" method="POST" enctype="multipart/form-data">
                 <!-- Name Input -->
                 <div class="input-wrapper">
                     <input type="text" name="name" class="form-control form-control-custom" placeholder="Full Name" required>
@@ -453,6 +478,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </div>
                     <div class="separator-line"></div>
                     <input type="tel" name="phone" class="phone-number-input" placeholder="Phone Number" required>
+                </div>
+
+                <!-- Profile Photo Input -->
+                <div class="input-wrapper mb-4">
+                    <label class="form-label text-muted small fw-semibold ms-1 mb-2">Profile Photo (Optional)</label>
+                    <input type="file" name="profile_photo" class="form-control" accept="image/*" style="border-radius: 14px; padding: 10px 15px; background: rgba(255,255,255,0.5);">
                 </div>
 
                 <!-- Password Input -->

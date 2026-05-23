@@ -81,6 +81,38 @@ while ($row = $result->fetch_assoc()) {
         <div class="container">
             <a class="navbar-brand" href="index.php"><i class="fas fa-bus-alt text-danger"></i> SmartBus</a>
             <div class="d-flex align-items-center gap-3">
+                <!-- User Profile Photo Display -->
+                <?php if(isset($_SESSION['profile_photo']) && !empty($_SESSION['profile_photo'])): ?>
+                    <div class="position-relative" style="cursor: pointer;" onclick="openProfileModal('assets/img/profiles/<?php echo htmlspecialchars($_SESSION['profile_photo']); ?>')">
+                        <img src="assets/img/profiles/<?php echo htmlspecialchars($_SESSION['profile_photo']); ?>" 
+                             alt="Profile" 
+                             class="rounded-circle border border-2 border-white shadow-sm" 
+                             style="width: 40px; height: 40px; object-fit: cover; transition: 0.3s;"
+                             onmouseover="this.style.opacity='0.8'" 
+                             onmouseout="this.style.opacity='1'">
+                        <div class="position-absolute bottom-0 start-100 translate-middle bg-primary rounded-circle d-flex justify-content-center align-items-center" 
+                             style="width: 18px; height: 18px; margin-left: -10px; border: 2px solid #212529;"
+                             data-bs-toggle="modal" data-bs-target="#uploadPhotoModal"
+                             title="Update Photo"
+                             onclick="event.stopPropagation();">
+                             <i class="fas fa-camera text-white" style="font-size: 0.55rem;"></i>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="position-relative" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                        <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center text-white border border-2 border-white shadow-sm" 
+                             style="width: 40px; height: 40px; font-weight: bold; transition: 0.3s;"
+                             onmouseover="this.style.opacity='0.8'" 
+                             onmouseout="this.style.opacity='1'">
+                            <?php echo strtoupper(substr($_SESSION['user_name'], 0, 1)); ?>
+                        </div>
+                        <div class="position-absolute bottom-0 start-100 translate-middle bg-primary rounded-circle d-flex justify-content-center align-items-center" 
+                             style="width: 18px; height: 18px; margin-left: -10px; border: 2px solid #212529;">
+                             <i class="fas fa-camera text-white" style="font-size: 0.55rem;"></i>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
                 <a href="index.php" class="text-white text-decoration-none small"><i class="fas fa-home"></i> Home</a>
                 <a href="includes/logout.php" class="btn btn-danger btn-sm rounded-pill px-3">Logout</a>
             </div>
@@ -202,8 +234,53 @@ while ($row = $result->fetch_assoc()) {
         </div>
     </div>
 
+    <!-- Profile Photo Viewer Modal -->
+    <div class="modal fade" id="profileViewerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body text-center position-relative">
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" style="z-index: 10;"></button>
+                    <img id="viewerImage" src="" alt="Profile Photo View" class="img-fluid rounded-4 shadow-lg" style="max-height: 80vh; border: 4px solid white;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Profile Photo Modal -->
+    <div class="modal fade" id="uploadPhotoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h6 class="modal-title fw-bold"><i class="fas fa-user-circle text-primary me-2"></i>Update Profile Photo</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="includes/update_profile_photo.php" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body py-4">
+                        <div class="text-center mb-3">
+                            <label for="new_profile_photo" class="d-block text-muted small mb-2 mx-auto cursor-pointer p-4 border border-1 border-dashed rounded-3 bg-light" style="cursor: pointer;">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-secondary mb-2"></i><br>
+                                Click to select new photo
+                            </label>
+                            <input type="file" name="new_profile_photo" id="new_profile_photo" class="form-control d-none" accept="image/*" required onchange="document.getElementById('uploadFileName').innerText = this.files[0].name;">
+                            <small id="uploadFileName" class="text-primary fw-bold"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0 justify-content-center">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function openProfileModal(imageUrl) {
+            document.getElementById('viewerImage').src = imageUrl;
+            new bootstrap.Modal(document.getElementById('profileViewerModal')).show();
+        }
+
         function openLostModal(busId, bookingId) {
             document.getElementById('modalBusId').value = busId;
             document.getElementById('modalBookingId').value = bookingId;

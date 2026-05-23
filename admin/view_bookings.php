@@ -16,6 +16,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
             u.name as passenger_name, 
             u.email as passenger_email,
             u.phone as passenger_phone,
+            u.profile_photo,
             bus.bus_number, 
             bus.bus_type, 
             r.source, 
@@ -99,8 +100,24 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
                                 <tr>
                                     <td>#<?php echo $row['booking_id']; ?></td>
                                     <td>
-                                        <div class="fw-bold"><?php echo htmlspecialchars($row['passenger_name']); ?></div>
-                                        <small class="text-muted"><?php echo htmlspecialchars($row['passenger_email']); ?></small>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <?php if(isset($row['profile_photo']) && !empty($row['profile_photo'])): ?>
+                                                <img src="../assets/img/profiles/<?php echo htmlspecialchars($row['profile_photo']); ?>" 
+                                                     alt="Profile" 
+                                                     class="rounded-circle shadow-sm" 
+                                                     style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;"
+                                                     onclick="openAdminProfileModal('../assets/img/profiles/<?php echo htmlspecialchars($row['profile_photo']); ?>')">
+                                            <?php else: ?>
+                                                <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center text-white shadow-sm" 
+                                                     style="width: 40px; height: 40px; font-weight: bold; font-size: 1.2rem;">
+                                                    <?php echo strtoupper(substr($row['passenger_name'], 0, 1)); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div>
+                                                <div class="fw-bold"><?php echo htmlspecialchars($row['passenger_name']); ?></div>
+                                                <small class="text-muted"><?php echo htmlspecialchars($row['passenger_email']); ?></small>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <small><?php echo htmlspecialchars($row['source']); ?></small>
@@ -139,5 +156,25 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'ADMIN') {
             </div>
         </div>
     </div>
+    <!-- Profile Photo Viewer Modal -->
+    <div class="modal fade" id="adminProfileViewerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body text-center position-relative">
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" style="z-index: 10;"></button>
+                    <img id="adminViewerImage" src="" alt="Passenger Profile View" class="img-fluid rounded-4 shadow-lg" style="max-height: 80vh; border: 4px solid white;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function openAdminProfileModal(imageUrl) {
+            document.getElementById('adminViewerImage').src = imageUrl;
+            new bootstrap.Modal(document.getElementById('adminProfileViewerModal')).show();
+        }
+    </script>
 </body>
 </html>
